@@ -1,0 +1,520 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4A7A2CBA151D02AE001EAC95 /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A7A2CB9151D02AE001EAC95 /* SenTestingKit.framework */; };
+		4A7A2CBC151D02AE001EAC95 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A7A2CBB151D02AE001EAC95 /* UIKit.framework */; };
+		4A7A2CBD151D02AE001EAC95 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A7A2CAB151D02AD001EAC95 /* Foundation.framework */; };
+		4A7A2CC0151D02AE001EAC95 /* libShapefile.lib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A7A2CA8151D02AD001EAC95 /* libShapefile.lib */; };
+		4A7A2CC6151D02AE001EAC95 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4A7A2CC4151D02AE001EAC95 /* InfoPlist.strings */; };
+		4A7A2CC9151D02AE001EAC95 /* ShapefileTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A7A2CC8151D02AE001EAC95 /* ShapefileTests.m */; };
+		4A7A2CD3151D06AD001EAC95 /* Shapefile.h in Headers */ = {isa = PBXBuildFile; fileRef = 4A7A2CD2151D06AD001EAC95 /* Shapefile.h */; };
+		4A7A2CD5151D4FC1001EAC95 /* Shapefile.c in Sources */ = {isa = PBXBuildFile; fileRef = 4A7A2CD4151D4FC0001EAC95 /* Shapefile.c */; };
+		4A7A2CE0151E160C001EAC95 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 4A7A2CDF151E160C001EAC95 /* main.c */; };
+		4A7A2CE2151E160C001EAC95 /* ShapefileTest.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4A7A2CE1151E160C001EAC95 /* ShapefileTest.1 */; };
+		4A7E4B03151E16D6008F1067 /* libShapefile.lib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A7A2CA8151D02AD001EAC95 /* libShapefile.lib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4A7A2CBE151D02AE001EAC95 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4A7A2C9F151D02AD001EAC95 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4A7A2CA7151D02AD001EAC95;
+			remoteInfo = Shapefile;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4A7A2CDA151E160B001EAC95 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				4A7A2CE2151E160C001EAC95 /* ShapefileTest.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		4A7A2CA8151D02AD001EAC95 /* libShapefile.lib */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libShapefile.lib; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A7A2CAB151D02AD001EAC95 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		4A7A2CAF151D02AD001EAC95 /* Shapefile-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Shapefile-Prefix.pch"; sourceTree = "<group>"; };
+		4A7A2CB8151D02AE001EAC95 /* ShapefileTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShapefileTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A7A2CB9151D02AE001EAC95 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
+		4A7A2CBB151D02AE001EAC95 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		4A7A2CC3151D02AE001EAC95 /* ShapefileTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ShapefileTests-Info.plist"; sourceTree = "<group>"; };
+		4A7A2CC5151D02AE001EAC95 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		4A7A2CC7151D02AE001EAC95 /* ShapefileTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShapefileTests.h; sourceTree = "<group>"; };
+		4A7A2CC8151D02AE001EAC95 /* ShapefileTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShapefileTests.m; sourceTree = "<group>"; };
+		4A7A2CD2151D06AD001EAC95 /* Shapefile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Shapefile.h; sourceTree = "<group>"; };
+		4A7A2CD4151D4FC0001EAC95 /* Shapefile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Shapefile.c; sourceTree = "<group>"; };
+		4A7A2CDC151E160B001EAC95 /* ShapefileTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ShapefileTest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A7A2CDF151E160C001EAC95 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		4A7A2CE1151E160C001EAC95 /* ShapefileTest.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = ShapefileTest.1; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4A7A2CA5151D02AD001EAC95 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A7A2CB4151D02AE001EAC95 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A7A2CBA151D02AE001EAC95 /* SenTestingKit.framework in Frameworks */,
+				4A7A2CBC151D02AE001EAC95 /* UIKit.framework in Frameworks */,
+				4A7A2CBD151D02AE001EAC95 /* Foundation.framework in Frameworks */,
+				4A7A2CC0151D02AE001EAC95 /* libShapefile.lib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A7A2CD9151E160B001EAC95 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A7E4B03151E16D6008F1067 /* libShapefile.lib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4A7A2C9D151D02AD001EAC95 = {
+			isa = PBXGroup;
+			children = (
+				4A7A2CAD151D02AD001EAC95 /* Shapefile */,
+				4A7A2CC1151D02AE001EAC95 /* ShapefileTests */,
+				4A7A2CDE151E160C001EAC95 /* ShapefileTest */,
+				4A7A2CAA151D02AD001EAC95 /* Frameworks */,
+				4A7A2CA9151D02AD001EAC95 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4A7A2CA9151D02AD001EAC95 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4A7A2CA8151D02AD001EAC95 /* libShapefile.lib */,
+				4A7A2CB8151D02AE001EAC95 /* ShapefileTests.octest */,
+				4A7A2CDC151E160B001EAC95 /* ShapefileTest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4A7A2CAA151D02AD001EAC95 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4A7A2CAB151D02AD001EAC95 /* Foundation.framework */,
+				4A7A2CB9151D02AE001EAC95 /* SenTestingKit.framework */,
+				4A7A2CBB151D02AE001EAC95 /* UIKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4A7A2CAD151D02AD001EAC95 /* Shapefile */ = {
+			isa = PBXGroup;
+			children = (
+				4A7A2CAE151D02AD001EAC95 /* Supporting Files */,
+				4A7A2CD2151D06AD001EAC95 /* Shapefile.h */,
+				4A7A2CD4151D4FC0001EAC95 /* Shapefile.c */,
+			);
+			path = Shapefile;
+			sourceTree = "<group>";
+		};
+		4A7A2CAE151D02AD001EAC95 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				4A7A2CAF151D02AD001EAC95 /* Shapefile-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		4A7A2CC1151D02AE001EAC95 /* ShapefileTests */ = {
+			isa = PBXGroup;
+			children = (
+				4A7A2CC7151D02AE001EAC95 /* ShapefileTests.h */,
+				4A7A2CC8151D02AE001EAC95 /* ShapefileTests.m */,
+				4A7A2CC2151D02AE001EAC95 /* Supporting Files */,
+			);
+			path = ShapefileTests;
+			sourceTree = "<group>";
+		};
+		4A7A2CC2151D02AE001EAC95 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				4A7A2CC3151D02AE001EAC95 /* ShapefileTests-Info.plist */,
+				4A7A2CC4151D02AE001EAC95 /* InfoPlist.strings */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		4A7A2CDE151E160C001EAC95 /* ShapefileTest */ = {
+			isa = PBXGroup;
+			children = (
+				4A7A2CDF151E160C001EAC95 /* main.c */,
+				4A7A2CE1151E160C001EAC95 /* ShapefileTest.1 */,
+			);
+			path = ShapefileTest;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		4A7A2CA6151D02AD001EAC95 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A7A2CD3151D06AD001EAC95 /* Shapefile.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		4A7A2CA7151D02AD001EAC95 /* Shapefile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A7A2CCC151D02AE001EAC95 /* Build configuration list for PBXNativeTarget "Shapefile" */;
+			buildPhases = (
+				4A7A2CA4151D02AD001EAC95 /* Sources */,
+				4A7A2CA5151D02AD001EAC95 /* Frameworks */,
+				4A7A2CA6151D02AD001EAC95 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Shapefile;
+			productName = Shapefile;
+			productReference = 4A7A2CA8151D02AD001EAC95 /* libShapefile.lib */;
+			productType = "com.apple.product-type.library.static";
+		};
+		4A7A2CB7151D02AE001EAC95 /* ShapefileTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A7A2CCF151D02AE001EAC95 /* Build configuration list for PBXNativeTarget "ShapefileTests" */;
+			buildPhases = (
+				4A7A2CB3151D02AE001EAC95 /* Sources */,
+				4A7A2CB4151D02AE001EAC95 /* Frameworks */,
+				4A7A2CB5151D02AE001EAC95 /* Resources */,
+				4A7A2CB6151D02AE001EAC95 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4A7A2CBF151D02AE001EAC95 /* PBXTargetDependency */,
+			);
+			name = ShapefileTests;
+			productName = ShapefileTests;
+			productReference = 4A7A2CB8151D02AE001EAC95 /* ShapefileTests.octest */;
+			productType = "com.apple.product-type.bundle";
+		};
+		4A7A2CDB151E160B001EAC95 /* ShapefileTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A7A2CE3151E160C001EAC95 /* Build configuration list for PBXNativeTarget "ShapefileTest" */;
+			buildPhases = (
+				4A7A2CD8151E160B001EAC95 /* Sources */,
+				4A7A2CD9151E160B001EAC95 /* Frameworks */,
+				4A7A2CDA151E160B001EAC95 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ShapefileTest;
+			productName = ShapefileTest;
+			productReference = 4A7A2CDC151E160B001EAC95 /* ShapefileTest */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4A7A2C9F151D02AD001EAC95 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+				ORGANIZATIONNAME = Oneironautics;
+			};
+			buildConfigurationList = 4A7A2CA2151D02AD001EAC95 /* Build configuration list for PBXProject "Shapefile" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 4A7A2C9D151D02AD001EAC95;
+			productRefGroup = 4A7A2CA9151D02AD001EAC95 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4A7A2CA7151D02AD001EAC95 /* Shapefile */,
+				4A7A2CB7151D02AE001EAC95 /* ShapefileTests */,
+				4A7A2CDB151E160B001EAC95 /* ShapefileTest */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4A7A2CB5151D02AE001EAC95 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A7A2CC6151D02AE001EAC95 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		4A7A2CB6151D02AE001EAC95 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4A7A2CA4151D02AD001EAC95 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A7A2CD5151D4FC1001EAC95 /* Shapefile.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A7A2CB3151D02AE001EAC95 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A7A2CC9151D02AE001EAC95 /* ShapefileTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A7A2CD8151E160B001EAC95 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A7A2CE0151E160C001EAC95 /* main.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4A7A2CBF151D02AE001EAC95 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4A7A2CA7151D02AD001EAC95 /* Shapefile */;
+			targetProxy = 4A7A2CBE151D02AE001EAC95 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		4A7A2CC4151D02AE001EAC95 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4A7A2CC5151D02AE001EAC95 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		4A7A2CCA151D02AE001EAC95 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		4A7A2CCB151D02AE001EAC95 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				SDKROOT = macosx;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		4A7A2CCD151D02AE001EAC95 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				DSTROOT = /tmp/Shapefile.dst;
+				EXECUTABLE_EXTENSION = lib;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Shapefile/Shapefile-Prefix.pch";
+				GCC_WARN_PEDANTIC = YES;
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Debug;
+		};
+		4A7A2CCE151D02AE001EAC95 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				DSTROOT = /tmp/Shapefile.dst;
+				EXECUTABLE_EXTENSION = lib;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Shapefile/Shapefile-Prefix.pch";
+				GCC_WARN_PEDANTIC = YES;
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Release;
+		};
+		4A7A2CD0151D02AE001EAC95 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Shapefile/Shapefile-Prefix.pch";
+				INFOPLIST_FILE = "ShapefileTests/ShapefileTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = octest;
+			};
+			name = Debug;
+		};
+		4A7A2CD1151D02AE001EAC95 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Shapefile/Shapefile-Prefix.pch";
+				INFOPLIST_FILE = "ShapefileTests/ShapefileTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = octest;
+			};
+			name = Release;
+		};
+		4A7A2CE4151E160C001EAC95 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		4A7A2CE5151E160C001EAC95 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4A7A2CA2151D02AD001EAC95 /* Build configuration list for PBXProject "Shapefile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A7A2CCA151D02AE001EAC95 /* Debug */,
+				4A7A2CCB151D02AE001EAC95 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4A7A2CCC151D02AE001EAC95 /* Build configuration list for PBXNativeTarget "Shapefile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A7A2CCD151D02AE001EAC95 /* Debug */,
+				4A7A2CCE151D02AE001EAC95 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4A7A2CCF151D02AE001EAC95 /* Build configuration list for PBXNativeTarget "ShapefileTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A7A2CD0151D02AE001EAC95 /* Debug */,
+				4A7A2CD1151D02AE001EAC95 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4A7A2CE3151E160C001EAC95 /* Build configuration list for PBXNativeTarget "ShapefileTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A7A2CE4151E160C001EAC95 /* Debug */,
+				4A7A2CE5151E160C001EAC95 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4A7A2C9F151D02AD001EAC95 /* Project object */;
+}
