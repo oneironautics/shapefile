@@ -50,7 +50,7 @@ enum ShapeType
     stPolyLineM = 23,
     stPolygonM = 25,
     stMultiPointM = 28,
-    stMultiPatc = 31
+    stMultiPatch = 31
 };
 
 /*
@@ -225,14 +225,14 @@ typedef struct SFPolyLine
  
  */
 
-struct SFPolygon
+typedef struct SFPolygon
 {
     double box[4];
     int32_t num_parts;
     int32_t num_points;
     int32_t* parts;
     SFPoint* points;
-};
+} SFPolygon;
 
 
 /* PointM shape.
@@ -473,7 +473,7 @@ SFError open_shapefile(const char* path);
 SFError close_shapefile(void);
 SFError validate_shapefile(void);
 SFError read_shapes(void);
-struct SFPolygon read_polygon(void);
+SFPolygon read_polygon(void);
 
 #ifdef __cplusplus
 }

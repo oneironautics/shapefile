@@ -32,7 +32,7 @@ FILE* g_shapefile;
 int32_t g_shape_type;
 int32_t g_shapefile_length;
 const char* g_path;
-struct SFPolygon* g_polygons;
+SFPolygon* g_polygons;
 int32_t g_polygons_index;
 
 int32_t byteswap32(int32_t value)
@@ -101,7 +101,7 @@ SFError validate_shapefile(void)
     
     if ( g_shape_type == stPolygon ) {
         g_polygons_index = 0;
-        g_polygons = (struct SFPolygon*)malloc(sizeof(struct SFPolygon) * 247);
+        g_polygons = (SFPolygon*)malloc(sizeof(SFPolygon) * 247);
     }
     
     return SF_OK;
@@ -141,7 +141,7 @@ SFError read_shapes(void)
     return SF_OK;
 }
 
-struct SFPolygon read_polygon(void)
+SFPolygon read_polygon(void)
 {
     double box[4];
     int32_t num_parts = 0;
@@ -160,10 +160,10 @@ struct SFPolygon read_polygon(void)
     polygon.num_points = num_points;
 
     polygon.parts = (int32_t*)malloc(sizeof(int32_t) * num_parts);
-    polygon.points = (struct SFPoint*)malloc(sizeof(struct SFPoint) * num_points);
+    polygon.points = (SFPoint*)malloc(sizeof(SFPoint) * num_points);
     
     fread(polygon.parts, sizeof(int32_t), num_parts, g_shapefile);
-    fread(polygon.points, sizeof(struct SFPoint), num_points, g_shapefile);
+    fread(polygon.points, sizeof(SFPoint), num_points, g_shapefile);
     
     return polygon;
 }
@@ -176,7 +176,7 @@ SFError close_shapefile()
     }
     if ( g_polygons != NULL ) {
         for ( int32_t x = 0; x < g_polygons_index; ++x ) {
-            struct SFPolygon polygon = g_polygons[x];
+            SFPolygon polygon = g_polygons[x];
             if ( polygon.parts != NULL ) {
                 free(polygon.parts);
                 polygon.parts = NULL;
