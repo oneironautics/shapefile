@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef Shapefile_Definitions_h
-#define Shapefile_Definitions_h
+#ifndef __SHAPEFILE_H__
+#define __SHAPEFILE_H__
 
 #include <stdint.h>
 
@@ -33,9 +33,6 @@ typedef enum SFError
     SF_ERROR = 0,
     SF_OK = 1
 } SFError;
-
-/*  Utility functions. */
-int32_t byteswap32(int32_t value);
 
 /*  Shape types. */
 enum ShapeType
@@ -80,7 +77,7 @@ enum ShapeType
  Byte 92* Bounding Box Mmax Double Little
  * Unused, with value 0.0, if not Measured or Z type
 */
-
+#ifndef _WIN32
 typedef struct __attribute__((__packed__)) SFMainFileHeader 
 {
     /*  Start big endian. */
@@ -105,6 +102,34 @@ typedef struct __attribute__((__packed__)) SFMainFileHeader
     double bb_mmax;
     /*  End little endian. */
 } SFMainFileHeader;
+#else
+#pragma pack(push, 1)
+typedef struct SFMainFileHeader 
+{
+    /*  Start big endian. */
+    int32_t file_code;
+    int32_t unused_0;
+    int32_t unused_1;
+    int32_t unused_2;
+    int32_t unused_3;
+    int32_t unused_4;
+    int32_t file_length;
+    /*  End big endian. */
+    /*  Start little endian. */
+    int32_t version;
+    int32_t shape_type;
+    double bb_xmin;
+    double bb_ymin;
+    double bb_xmax;
+    double bb_ymax;
+    double bb_zmin;
+    double bb_zmax;
+    double bb_mmin;
+    double bb_mmax;
+    /*  End little endian. */
+} SFMainFileHeader;
+#pragma pack(pop)
+#endif
 
 /*
 Byte 0 Record Number Record Number Integer Big
@@ -200,14 +225,15 @@ typedef struct SFPolyLine
  
  */
 
-typedef struct SFPolygon
+struct SFPolygon
 {
     double box[4];
     int32_t num_parts;
     int32_t num_points;
     int32_t* parts;
     SFPoint* points;
-} SFPolygon;
+};
+
 
 /* PointM shape.
  
@@ -432,11 +458,26 @@ typedef struct SFMultiPatch
     double* m_array;
 } SFMultiPatch;
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/*  Utility functions. */
+int32_t byteswap32(int32_t value);
+void print_msg(const char* format, ...);
+
 /*  Shape file functions. */
 SFError open_shapefile(const char* path);
 SFError close_shapefile(void);
 SFError validate_shapefile(void);
 SFError read_shapes(void);
-SFPolygon read_polygon(void);
+struct SFPolygon read_polygon(void);
 
+#ifdef __cplusplus
+}
+#endif
+
+/*	__SHAPEFILE_H__ */
 #endif

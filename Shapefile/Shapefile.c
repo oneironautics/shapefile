@@ -24,13 +24,15 @@ THE SOFTWARE.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
+
 #include "Shapefile.h"
 
 FILE* g_shapefile;
 int32_t g_shape_type;
 int32_t g_shapefile_length;
 const char* g_path;
-SFPolygon* g_polygons;
+struct SFPolygon* g_polygons;
 int32_t g_polygons_index;
 
 int32_t byteswap32(int32_t value)
@@ -44,14 +46,34 @@ int32_t byteswap32(int32_t value)
     return value;
 }
 
+void print_msg(const char* format, ...)
+{
+	char buf[1024];
+
+	va_list args;
+	va_start(args, format);
+	
+#ifndef _WIN32
+	sprintf(buf, format, args);
+#else
+	sprintf_s(buf, 1024, format, args);
+#endif
+
+	va_end(args);
+}
+
 SFError open_shapefile(const char* path)
 {
     g_path = path;
+
+#ifndef _WIN32
     g_shapefile = fopen(g_path, "r");
+#else
+	fopen_s(&g_shapefile, g_path, "r");
+#endif
     
     if ( g_shapefile == 0 ) {
-        char buf[1024];
-        sprintf(buf, "Could not open shape file <%s>.", g_path);
+        print_msg("Could not open shape file <%s>.", g_path);
         return SF_ERROR;
     }
     
@@ -65,14 +87,12 @@ SFError validate_shapefile(void)
     fread(&header, sizeof(SFMainFileHeader), 1, g_shapefile);
     
     if ( ferror(g_shapefile) ) {
-        char buf[1024];
-        sprintf(buf, "Could not read shape file <%s>.\n", g_path);
+        print_msg("Could not read shape file <%s>.\n", g_path);
         return SF_ERROR;
     }
     
     if ( byteswap32(header.file_code) != 9994 || header.version != 1000 ) {
-        char buf[1024];
-        sprintf(buf, "File <%s> is not a shape file.\n", g_path);
+        print_msg("File <%s> is not a shape file.\n", g_path);
         return SF_ERROR;
     }
     
@@ -81,7 +101,7 @@ SFError validate_shapefile(void)
     
     if ( g_shape_type == stPolygon ) {
         g_polygons_index = 0;
-        g_polygons = (SFPolygon*)malloc(sizeof(SFPolygon) * 247);
+        g_polygons = (struct SFPolygon*)malloc(sizeof(struct SFPolygon) * 247);
     }
     
     return SF_OK;
@@ -102,7 +122,7 @@ SFError read_shapes(void)
         fread(&shape_type, sizeof(int32_t), 1, g_shapefile);
         
 #ifdef DEBUG
-        printf("Record number: %d, size %d, shape type %d.\n", byteswap32(header.record_number), byteswap32(header.content_length), shape_type);
+        print_msg("Record number: %d, size %d, shape type %d.\n", byteswap32(header.record_number), byteswap32(header.content_length), shape_type);
         fflush(stdout);
 #endif
         switch ( shape_type ) {
@@ -111,7 +131,7 @@ SFError read_shapes(void)
                 g_polygons_index++;
                 break;
             default:
-                printf("Found unsupported shape type <%d>", shape_type);
+                print_msg("Found unsupported shape type <%d>", shape_type);
                 fflush(stdout);
                 /*  Skips to the next record. For testing purposes. */
                 fseek(g_shapefile, byteswap32(header.content_length) * sizeof(int16_t), SEEK_CUR);
@@ -121,7 +141,7 @@ SFError read_shapes(void)
     return SF_OK;
 }
 
-SFPolygon read_polygon(void)
+struct SFPolygon read_polygon(void)
 {
     double box[4];
     int32_t num_parts = 0;
@@ -140,10 +160,10 @@ SFPolygon read_polygon(void)
     polygon.num_points = num_points;
 
     polygon.parts = (int32_t*)malloc(sizeof(int32_t) * num_parts);
-    polygon.points = (SFPoint*)malloc(sizeof(SFPoint) * num_points);
+    polygon.points = (struct SFPoint*)malloc(sizeof(struct SFPoint) * num_points);
     
     fread(polygon.parts, sizeof(int32_t), num_parts, g_shapefile);
-    fread(polygon.points, sizeof(SFPoint), num_points, g_shapefile);
+    fread(polygon.points, sizeof(struct SFPoint), num_points, g_shapefile);
     
     return polygon;
 }
@@ -156,7 +176,7 @@ SFError close_shapefile()
     }
     if ( g_polygons != NULL ) {
         for ( int32_t x = 0; x < g_polygons_index; ++x ) {
-            SFPolygon polygon = g_polygons[x];
+            struct SFPolygon polygon = g_polygons[x];
             if ( polygon.parts != NULL ) {
                 free(polygon.parts);
                 polygon.parts = NULL;
