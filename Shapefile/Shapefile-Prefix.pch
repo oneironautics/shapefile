@@ -1,7 +1,0 @@
-//
-// Prefix header for all source files of the 'Shapefile' target in the 'Shapefile' project
-//
-
-#ifdef __OBJC__
-    #import <Foundation/Foundation.h>
-#endif

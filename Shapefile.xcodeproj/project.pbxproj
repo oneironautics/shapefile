@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		4A7A2CBA151D02AE001EAC95 /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A7A2CB9151D02AE001EAC95 /* SenTestingKit.framework */; };
-		4A7A2CBC151D02AE001EAC95 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A7A2CBB151D02AE001EAC95 /* UIKit.framework */; };
 		4A7A2CBD151D02AE001EAC95 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A7A2CAB151D02AD001EAC95 /* Foundation.framework */; };
 		4A7A2CC0151D02AE001EAC95 /* libShapefile.lib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A7A2CA8151D02AD001EAC95 /* libShapefile.lib */; };
 		4A7A2CC6151D02AE001EAC95 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4A7A2CC4151D02AE001EAC95 /* InfoPlist.strings */; };
@@ -46,10 +45,8 @@
 /* Begin PBXFileReference section */
 		4A7A2CA8151D02AD001EAC95 /* libShapefile.lib */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libShapefile.lib; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A7A2CAB151D02AD001EAC95 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		4A7A2CAF151D02AD001EAC95 /* Shapefile-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Shapefile-Prefix.pch"; sourceTree = "<group>"; };
 		4A7A2CB8151D02AE001EAC95 /* ShapefileTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShapefileTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A7A2CB9151D02AE001EAC95 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
-		4A7A2CBB151D02AE001EAC95 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		4A7A2CC3151D02AE001EAC95 /* ShapefileTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ShapefileTests-Info.plist"; sourceTree = "<group>"; };
 		4A7A2CC5151D02AE001EAC95 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4A7A2CC7151D02AE001EAC95 /* ShapefileTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShapefileTests.h; sourceTree = "<group>"; };
@@ -74,7 +71,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				4A7A2CBA151D02AE001EAC95 /* SenTestingKit.framework in Frameworks */,
-				4A7A2CBC151D02AE001EAC95 /* UIKit.framework in Frameworks */,
 				4A7A2CBD151D02AE001EAC95 /* Foundation.framework in Frameworks */,
 				4A7A2CC0151D02AE001EAC95 /* libShapefile.lib in Frameworks */,
 			);
@@ -117,7 +113,6 @@
 			children = (
 				4A7A2CAB151D02AD001EAC95 /* Foundation.framework */,
 				4A7A2CB9151D02AE001EAC95 /* SenTestingKit.framework */,
-				4A7A2CBB151D02AE001EAC95 /* UIKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -125,19 +120,10 @@
 		4A7A2CAD151D02AD001EAC95 /* Shapefile */ = {
 			isa = PBXGroup;
 			children = (
-				4A7A2CAE151D02AD001EAC95 /* Supporting Files */,
 				4A7A2CD2151D06AD001EAC95 /* Shapefile.h */,
 				4A7A2CD4151D4FC0001EAC95 /* Shapefile.c */,
 			);
 			path = Shapefile;
-			sourceTree = "<group>";
-		};
-		4A7A2CAE151D02AD001EAC95 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				4A7A2CAF151D02AD001EAC95 /* Shapefile-Prefix.pch */,
-			);
-			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		4A7A2CC1151D02AE001EAC95 /* ShapefileTests */ = {
@@ -341,9 +327,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				COPY_PHASE_STRIP = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = c89;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -357,6 +343,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
+				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -365,15 +353,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				COPY_PHASE_STRIP = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = c89;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
+				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = macosx;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -385,12 +375,12 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				DSTROOT = /tmp/Shapefile.dst;
 				EXECUTABLE_EXTENSION = lib;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "Shapefile/Shapefile-Prefix.pch";
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
 				GCC_WARN_PEDANTIC = YES;
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				OTHER_LDFLAGS = "-ObjC";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = macosx;
@@ -405,12 +395,12 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				DSTROOT = /tmp/Shapefile.dst;
 				EXECUTABLE_EXTENSION = lib;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "Shapefile/Shapefile-Prefix.pch";
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
 				GCC_WARN_PEDANTIC = YES;
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				OTHER_LDFLAGS = "-ObjC";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = macosx;
