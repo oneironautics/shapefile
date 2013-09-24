@@ -146,12 +146,12 @@ SFPolygon read_polygon(void)
     double box[4];
     int32_t num_parts = 0;
     int32_t num_points = 0;
+	SFPolygon polygon;
     
     fread(box, sizeof(double) * 4, 1, g_shapefile);
     fread(&num_parts, sizeof(int32_t), 1, g_shapefile);
     fread(&num_points, sizeof(int32_t), 1, g_shapefile);
     
-    SFPolygon polygon;
     polygon.box[0] = box[0];
     polygon.box[1] = box[1];
     polygon.box[2] = box[2];
@@ -175,7 +175,8 @@ SFError close_shapefile()
         g_shapefile = NULL;
     }
     if ( g_polygons != NULL ) {
-        for ( int32_t x = 0; x < g_polygons_index; ++x ) {
+		int32_t x = 0;
+        for ( ; x < g_polygons_index; ++x ) {
             SFPolygon polygon = g_polygons[x];
             if ( polygon.parts != NULL ) {
                 free(polygon.parts);

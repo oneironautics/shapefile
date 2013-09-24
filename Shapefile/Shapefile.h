@@ -458,7 +458,6 @@ typedef struct SFMultiPatch
     double* m_array;
 } SFMultiPatch;
 
-
 #ifdef __cplusplus
 extern "C"
 {
