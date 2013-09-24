@@ -1,0 +1,3 @@
+World Borders Dataset by Thematic Mapping
+http://thematicmapping.org/downloads/world_borders.php
+Licensed under the Creative Commons Attribution-Share Alike License.
