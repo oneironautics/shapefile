@@ -27,12 +27,15 @@ THE SOFTWARE.
 
 #include <stdint.h>
 
+#define SHAPEFILE_VERSION 1000
+#define SHAPEFILE_FILE_CODE 9994
+
 /*  Return codes. */
-typedef enum SFError
+typedef enum SFResult
 {
     SF_ERROR = 0,
     SF_OK = 1
-} SFError;
+} SFResult;
 
 /*  Shape types. */
 enum ShapeType
@@ -468,10 +471,11 @@ int32_t byteswap32(int32_t value);
 void print_msg(const char* format, ...);
 
 /*  Shape file functions. */
-SFError open_shapefile(const char* path);
-SFError close_shapefile(void);
-SFError validate_shapefile(void);
-SFError read_shapes(void);
+SFResult open_shapefile(const char* path);
+SFResult close_shapefile(void);
+SFResult validate_shapefile(void);
+SFResult read_shapes(void);
+SFPolygon read_polygon(void);
 SFPolygon read_polygon(void);
 
 #ifdef __cplusplus

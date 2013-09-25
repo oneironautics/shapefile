@@ -35,6 +35,17 @@ const char* g_path;
 SFPolygon* g_polygons;
 int32_t g_polygons_index;
 
+/*	int32_t byteswap32(int32_t value)
+
+A cross-platform helper for flipping endianess.
+
+Arguments:
+	value: the un-byteswapped value.
+
+Returns:
+	int32_t: the byteswapped value.
+
+*/
 int32_t byteswap32(int32_t value)
 {
 #ifndef _WIN32
@@ -46,6 +57,18 @@ int32_t byteswap32(int32_t value)
     return value;
 }
 
+/*	void print_msg(const char* format, ...)
+
+A cross-platform helper for sprintf to use sprintf_s on Windows platforms.
+
+Arguments:
+	format: the printf-esque format string.
+	...: varargs of the printf formatters.
+
+Returns:
+	N/A.
+
+*/
 void print_msg(const char* format, ...)
 {
 	char buf[1024];
@@ -62,14 +85,25 @@ void print_msg(const char* format, ...)
 	va_end(args);
 }
 
-SFError open_shapefile(const char* path)
+/*	SFResult open_shapefile(const char* path)
+
+Opens a shapefile for reading.
+
+Arguments:
+	const char* path: the path to the shapefile to open.
+	
+Returns:
+	SF_ERROR: the shapefile could not be opened.
+	SF_OK: the shapefile could be opened.
+*/
+SFResult open_shapefile(const char* path)
 {
     g_path = path;
 
 #ifndef _WIN32
-    g_shapefile = fopen(g_path, "r");
+    g_shapefile = fopen(g_path, "rb");
 #else
-	fopen_s(&g_shapefile, g_path, "r");
+	fopen_s(&g_shapefile, g_path, "rb");
 #endif
     
     if ( g_shapefile == 0 ) {
@@ -80,9 +114,21 @@ SFError open_shapefile(const char* path)
     return SF_OK;
 }
 
-SFError validate_shapefile(void)
+/*	SFResult validate_shapefile(void)
+
+Validates that a file is an ESRI shapefile based on the header.
+
+Arguments:
+	N/A.
+	
+Returns:
+	SF_ERROR: the file was not a valid ESRI shapefile.
+	SF_OK: the file is a valid ESRI shapefile.
+*/
+SFResult validate_shapefile(void)
 {
     SFMainFileHeader header;
+	int32_t record_length;
     
     fread(&header, sizeof(SFMainFileHeader), 1, g_shapefile);
     
@@ -91,23 +137,55 @@ SFError validate_shapefile(void)
         return SF_ERROR;
     }
     
-    if ( byteswap32(header.file_code) != 9994 || header.version != 1000 ) {
+    if ( byteswap32(header.file_code) != SHAPEFILE_FILE_CODE || header.version != SHAPEFILE_VERSION ) {
         print_msg("File <%s> is not a shape file.\n", g_path);
         return SF_ERROR;
     }
     
     g_shape_type = header.shape_type;
     g_shapefile_length = byteswap32(header.file_length);
-    
-    if ( g_shape_type == stPolygon ) {
-        g_polygons_index = 0;
-        g_polygons = (SFPolygon*)malloc(sizeof(SFPolygon) * 247);
-    }
+	record_length = byteswap32(header.file_length) - sizeof(SFMainFileHeader);
+
+	switch ( g_shape_type ) {
+		case stNull:
+		case stPoint:
+		case stPolyline:
+			print_msg("Shape type <%d> not implemented.\n", g_shape_type);
+			break;
+        case stPolygon:
+            g_polygons[g_polygons_index] = read_polygon();
+            g_polygons_index++;
+            break;
+		case stMultiPoint:
+		case stPointZ:
+		case stPolyLineZ:
+		case stPolygonZ:
+		case stMultiPointZ:
+		case stPointM:
+		case stPolyLineM:
+		case stPolygonM:
+		case stMultiPointM:
+		case stMultiPatch:
+        default:
+            print_msg("Encountered unsupported shape type <%d>\n", g_shape_type);
+			return SF_ERROR;
+	}
     
     return SF_OK;
 }
 
-SFError read_shapes(void)
+/*	SFResult read_shapes(void)
+
+Reads shapes from a shapefile.
+
+Arguments:
+	N/A.
+	
+Returns:
+	SF_ERROR: an error was encountered during reading of shapefiles.
+	SF_OK: no errors occurred.
+*/
+SFResult read_shapes(void)
 {
     while ( !feof(g_shapefile) ) {
         /*  Read a file record header. */
@@ -115,23 +193,41 @@ SFError read_shapes(void)
         int32_t shape_type;
         
         size_t bytes_read = fread(&header, sizeof(SFMainFileRecordHeader), 1, g_shapefile);
+
         if ( bytes_read != 1 ) {
-            /*  End of file reached, or something more catastrophic. */
-            break;
+            return SF_ERROR;
         }
+
         fread(&shape_type, sizeof(int32_t), 1, g_shapefile);
-        
+
 #ifdef DEBUG
         print_msg("Record number: %d, size %d, shape type %d.\n", byteswap32(header.record_number), byteswap32(header.content_length), shape_type);
         fflush(stdout);
 #endif
+
         switch ( shape_type ) {
-            case 5:
+			case stNull:
+			case stPoint:
+			case stPolyline:
+				print_msg("Shape type <%d> not implemented.\n", shape_type);
+				fseek(g_shapefile, byteswap32(header.content_length) * sizeof(int16_t), SEEK_CUR);
+				break;
+            case stPolygon:
                 g_polygons[g_polygons_index] = read_polygon();
                 g_polygons_index++;
                 break;
+			case stMultiPoint:
+			case stPointZ:
+			case stPolyLineZ:
+			case stPolygonZ:
+			case stMultiPointZ:
+			case stPointM:
+			case stPolyLineM:
+			case stPolygonM:
+			case stMultiPointM:
+			case stMultiPatch:
             default:
-                print_msg("Found unsupported shape type <%d>", shape_type);
+                print_msg("Encountered unsupported shape type <%d>\n", shape_type);
                 fflush(stdout);
                 /*  Skips to the next record. For testing purposes. */
                 fseek(g_shapefile, byteswap32(header.content_length) * sizeof(int16_t), SEEK_CUR);
@@ -141,6 +237,16 @@ SFError read_shapes(void)
     return SF_OK;
 }
 
+/*	SFResult read_polygon(void)
+
+Reads a polygon from a shapefile.
+
+Arguments:
+	N/A.
+	
+Returns:
+	SFPolygon: the polygon read from the shapefile.
+*/
 SFPolygon read_polygon(void)
 {
     double box[4];
@@ -168,7 +274,17 @@ SFPolygon read_polygon(void)
     return polygon;
 }
 
-SFError close_shapefile()
+/*	SFResult close_shapefile(void)
+
+Closes the shapefile and frees all memory associated with it.
+
+Arguments:
+	N/A.
+	
+Returns:
+	SF_OK: no errors occurred.
+*/
+SFResult close_shapefile(void)
 {
     if ( g_shapefile != NULL ) {
         fclose(g_shapefile);
