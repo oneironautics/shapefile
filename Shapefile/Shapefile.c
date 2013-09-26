@@ -150,9 +150,9 @@ SFResult allocate_shapes(void)
         header.content_length = byteswap32(header.content_length);
         header.record_number = byteswap32(header.record_number);
         fread(&shape_type, sizeof(int32_t), 1, g_shapefile);
-        fseek(g_shapefile, header.content_length * 2 - sizeof(int32_t), SEEK_CUR);
+        fseek(g_shapefile, header.content_length * sizeof(int16_t) - sizeof(int32_t), SEEK_CUR);
 
-        content_length += header.content_length * 2 - sizeof(int32_t);
+        content_length += header.content_length * sizeof(int16_t) - sizeof(int32_t);
         num_records++;
     }
 
@@ -221,10 +221,10 @@ SFResult read_shapes(void)
         print_msg("Record number: %d, size %d, shape type %d.\n", byteswap32(header.record_number), byteswap32(header.content_length), shape_type);
 #endif
         /*  Dump the data into the respective record index in g_shapes->records. */
-        g_shapes->records[index]->record_size = header.content_length * 2 - sizeof(int32_t);
+        g_shapes->records[index]->record_size = header.content_length * sizeof(int16_t) - sizeof(int32_t);
         g_shapes->records[index]->record_type = shape_type;
-        g_shapes->records[index]->data = malloc(header.content_length * 2 - sizeof(int32_t));
-        fread(g_shapes->records[index]->data, header.content_length * 2 - sizeof(int32_t), 1, g_shapefile);
+        g_shapes->records[index]->data = malloc(header.content_length * sizeof(int16_t) - sizeof(int32_t));
+        fread(g_shapes->records[index]->data, header.content_length * sizeof(int16_t) - sizeof(int32_t), 1, g_shapefile);
         index++;
     }
     
