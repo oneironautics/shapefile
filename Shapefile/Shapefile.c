@@ -28,12 +28,9 @@ THE SOFTWARE.
 
 #include "Shapefile.h"
 
-FILE* g_shapefile;
-int32_t g_shape_type;
-int32_t g_shapefile_length;
 const char* g_path;
-SFPolygon* g_polygons;
-int32_t g_polygons_index;
+FILE* g_shapefile;
+SFShapes* g_shapes;
 
 /*    int32_t byteswap32(int32_t value)
 
@@ -48,10 +45,10 @@ Returns:
 */
 int32_t byteswap32(int32_t value)
 {
-#ifndef _WIN32
-    value = __builtin_bswap32(value);
-#else
+#ifdef _WIN32
     value = _byteswap_ulong(value);
+#else
+    value = __builtin_bswap32(value);
 #endif
     
     return value;
@@ -76,10 +73,10 @@ void print_msg(const char* format, ...)
     va_list args;
     va_start(args, format);
     
-#ifndef _WIN32
-    sprintf(buf, format, args);
-#else
+#ifdef _WIN32
     sprintf_s(buf, 1024, format, args);
+#else
+    sprintf(buf, format, args);
 #endif
 
     va_end(args);
@@ -98,39 +95,21 @@ Returns:
 */
 SFResult open_shapefile(const char* path)
 {
+    SFFileHeader header;
     g_path = path;
 
-#ifndef _WIN32
-    g_shapefile = fopen(g_path, "rb");
-#else
+#ifdef _WIN32
     fopen_s(&g_shapefile, g_path, "rb");
+#else
+    g_shapefile = fopen(g_path, "rb");
 #endif
     
     if ( g_shapefile == 0 ) {
         print_msg("Could not open shape file <%s>.", g_path);
         return SF_ERROR;
     }
-    
-    return SF_OK;
-}
 
-/*    SFResult validate_shapefile(void)
-
-Validates that a file is an ESRI shapefile based on the header.
-
-Arguments:
-    N/A.
-    
-Returns:
-    SF_ERROR: the file was not a valid ESRI shapefile.
-    SF_OK: the file is a valid ESRI shapefile.
-*/
-SFResult validate_shapefile(void)
-{
-    SFMainFileHeader header;
-    int32_t record_length;
-    
-    fread(&header, sizeof(SFMainFileHeader), 1, g_shapefile);
+    fread(&header, sizeof(SFFileHeader), 1, g_shapefile);
     
     if ( ferror(g_shapefile) ) {
         print_msg("Could not read shape file <%s>.\n", g_path);
@@ -142,35 +121,75 @@ SFResult validate_shapefile(void)
         return SF_ERROR;
     }
     
-    g_shape_type = header.shape_type;
-    g_shapefile_length = byteswap32(header.file_length);
-    record_length = byteswap32(header.file_length) - sizeof(SFMainFileHeader);
+    return SF_OK;
+}
 
-    switch ( g_shape_type ) {
-        case stNull:
-        case stPoint:
-        case stPolyline:
-            print_msg("Shape type <%d> not implemented.\n", g_shape_type);
-            break;
-        case stPolygon:
-            g_polygons[g_polygons_index] = read_polygon();
-            g_polygons_index++;
-            break;
-        case stMultiPoint:
-        case stPointZ:
-        case stPolyLineZ:
-        case stPolygonZ:
-        case stMultiPointZ:
-        case stPointM:
-        case stPolyLineM:
-        case stPolygonM:
-        case stMultiPointM:
-        case stMultiPatch:
-        default:
-            print_msg("Encountered unsupported shape type <%d>\n", g_shape_type);
-            return SF_ERROR;
-    }
+/*    void allocate_shapes(void)
+
+Allocates memory for all shapes to be read from the shapefile.
+
+Arguments:
+    N/A.
     
+Returns:
+    SF_OK: no errors occurred.
+    SF_ERROR: out of memory, or something equally catastrophic.
+*/
+SFResult allocate_shapes(void)
+{
+    int32_t x = 0;
+    int32_t num_records = 0;
+    int32_t content_length = 0;
+
+    /*  Read each shape record header and tally up the content length/number of records. */
+    while ( !feof(g_shapefile) ) {
+        SFShapeRecordHeader header;
+        int32_t shape_type = 0;
+
+        fread(&header, sizeof(SFShapeRecordHeader), 1, g_shapefile);
+
+        if ( feof(g_shapefile) ) {
+            break;
+        }
+
+        header.content_length = byteswap32(header.content_length);
+        header.record_number = byteswap32(header.record_number);
+        fread(&shape_type, sizeof(int32_t), 1, g_shapefile);
+        fseek(g_shapefile, header.content_length * 2 - sizeof(int32_t), SEEK_CUR);
+
+        content_length += header.content_length * 2 - sizeof(int32_t);
+        num_records++;
+    }
+
+    /*  Seek back to the end of the main file header. */
+    fseek(g_shapefile, sizeof(SFFileHeader), SEEK_SET);
+
+    /*  Allocate, allocate, and allocate again. */
+    g_shapes = (SFShapes*)malloc(sizeof(SFShapes));
+
+    if ( g_shapes == 0 ) {
+        print_msg("Could not allocate memory for g_shapes!");
+        return SF_ERROR;
+    }
+
+    g_shapes->records = (SFShapeRecord**)malloc(sizeof(SFShapeRecord) * (num_records + 1));
+
+    if ( g_shapes->records == 0 ) {
+        print_msg("Could not allocate memory for g_shapes->records!");
+        return SF_ERROR;
+    }
+
+    for ( ; x < num_records + 1; ++x ) {
+        g_shapes->records[x] = (SFShapeRecord*)malloc(sizeof(SFShapeRecord) * (num_records + 1));
+
+        if ( g_shapes->records[x] == 0 ) {
+            print_msg("Could not allocate memory for g_shapes->records[%d]!", x);
+            return SF_ERROR;
+        }
+    }
+
+    g_shapes->num_records = num_records + 1;
+
     return SF_OK;
 }
 
@@ -187,91 +206,34 @@ Returns:
 */
 SFResult read_shapes(void)
 {
+    int32_t index = 0;
+
+    if ( allocate_shapes() == SF_ERROR ) {
+        return SF_ERROR;
+    }
+
     while ( !feof(g_shapefile) ) {
         /*  Read a file record header. */
-        SFMainFileRecordHeader header;
-        int32_t shape_type;
-        
-        size_t bytes_read = fread(&header, sizeof(SFMainFileRecordHeader), 1, g_shapefile);
+        SFShapeRecordHeader header;
+        int32_t shape_type = 0;
 
-        if ( bytes_read != 1 ) {
-            return SF_ERROR;
-        }
-
+        fread(&header, sizeof(SFShapeRecordHeader), 1, g_shapefile);
+        header.content_length = byteswap32(header.content_length);
+        header.record_number = byteswap32(header.record_number);
         fread(&shape_type, sizeof(int32_t), 1, g_shapefile);
 
 #ifdef DEBUG
         print_msg("Record number: %d, size %d, shape type %d.\n", byteswap32(header.record_number), byteswap32(header.content_length), shape_type);
-        fflush(stdout);
 #endif
-
-        switch ( shape_type ) {
-            case stNull:
-            case stPoint:
-            case stPolyline:
-                print_msg("Shape type <%d> not implemented.\n", shape_type);
-                fseek(g_shapefile, byteswap32(header.content_length) * sizeof(int16_t), SEEK_CUR);
-                break;
-            case stPolygon:
-                g_polygons[g_polygons_index] = read_polygon();
-                g_polygons_index++;
-                break;
-            case stMultiPoint:
-            case stPointZ:
-            case stPolyLineZ:
-            case stPolygonZ:
-            case stMultiPointZ:
-            case stPointM:
-            case stPolyLineM:
-            case stPolygonM:
-            case stMultiPointM:
-            case stMultiPatch:
-            default:
-                print_msg("Encountered unsupported shape type <%d>\n", shape_type);
-                fflush(stdout);
-                /*  Skips to the next record. For testing purposes. */
-                fseek(g_shapefile, byteswap32(header.content_length) * sizeof(int16_t), SEEK_CUR);
-        }
+        /*  Dump the data into the respective record index in g_shapes->records. */
+        g_shapes->records[index]->record_size = header.content_length * 2 - sizeof(int32_t);
+        g_shapes->records[index]->record_type = shape_type;
+        g_shapes->records[index]->data = malloc(header.content_length * 2 - sizeof(int32_t));
+        fread(g_shapes->records[index]->data, header.content_length * 2 - sizeof(int32_t), 1, g_shapefile);
+        index++;
     }
     
     return SF_OK;
-}
-
-/*    SFResult read_polygon(void)
-
-Reads a polygon from a shapefile.
-
-Arguments:
-    N/A.
-    
-Returns:
-    SFPolygon: the polygon read from the shapefile.
-*/
-SFPolygon read_polygon(void)
-{
-    double box[4];
-    int32_t num_parts = 0;
-    int32_t num_points = 0;
-    SFPolygon polygon;
-    
-    fread(box, sizeof(double) * 4, 1, g_shapefile);
-    fread(&num_parts, sizeof(int32_t), 1, g_shapefile);
-    fread(&num_points, sizeof(int32_t), 1, g_shapefile);
-    
-    polygon.box[0] = box[0];
-    polygon.box[1] = box[1];
-    polygon.box[2] = box[2];
-    polygon.box[3] = box[3];
-    polygon.num_parts = num_parts;
-    polygon.num_points = num_points;
-
-    polygon.parts = (int32_t*)malloc(sizeof(int32_t) * num_parts);
-    polygon.points = (SFPoint*)malloc(sizeof(SFPoint) * num_points);
-    
-    fread(polygon.parts, sizeof(int32_t), num_parts, g_shapefile);
-    fread(polygon.points, sizeof(SFPoint), num_points, g_shapefile);
-    
-    return polygon;
 }
 
 /*    SFResult close_shapefile(void)
@@ -286,26 +248,25 @@ Returns:
 */
 SFResult close_shapefile(void)
 {
-    if ( g_shapefile != NULL ) {
+    int32_t x = 0;
+
+    /*  Close the shapefile. */
+    if ( g_shapefile != 0 ) {
         fclose(g_shapefile);
-        g_shapefile = NULL;
+        g_shapefile = 0;
     }
-    if ( g_polygons != NULL ) {
-        int32_t x = 0;
-        for ( ; x < g_polygons_index; ++x ) {
-            SFPolygon polygon = g_polygons[x];
-            if ( polygon.parts != NULL ) {
-                free(polygon.parts);
-                polygon.parts = NULL;
-            }
-            if ( polygon.points != NULL ) {
-                free(polygon.points);
-                polygon.points = NULL;
-            }
+
+    /*  Free all memory. */
+    if ( g_shapes != 0 ) {
+        for ( ; x < g_shapes->num_records; ++x ) {
+            SFShapeRecord* shape_record = g_shapes->records[x];
+            free(shape_record->data);
+            free(g_shapes->records[x]);
         }
-        
-        free(g_polygons);
-        g_polygons = NULL;
+
+        free(g_shapes->records);
+        free(g_shapes);
+        g_shapes = 0;
     }
     
     return SF_OK;

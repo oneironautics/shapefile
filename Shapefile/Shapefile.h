@@ -80,34 +80,12 @@ enum ShapeType
  Byte 92* Bounding Box Mmax Double Little
  * Unused, with value 0.0, if not Measured or Z type
 */
-#ifndef _WIN32
-typedef struct __attribute__((__packed__)) SFMainFileHeader 
-{
-    /*  Start big endian. */
-    int32_t file_code;
-    int32_t unused_0;
-    int32_t unused_1;
-    int32_t unused_2;
-    int32_t unused_3;
-    int32_t unused_4;
-    int32_t file_length;
-    /*  End big endian. */
-    /*  Start little endian. */
-    int32_t version;
-    int32_t shape_type;
-    double bb_xmin;
-    double bb_ymin;
-    double bb_xmax;
-    double bb_ymax;
-    double bb_zmin;
-    double bb_zmax;
-    double bb_mmin;
-    double bb_mmax;
-    /*  End little endian. */
-} SFMainFileHeader;
-#else
+#ifdef _WIN32
 #pragma pack(push, 1)
-typedef struct SFMainFileHeader 
+typedef struct SFFileHeader 
+#else
+typedef struct __attribute__((__packed__)) SFMainFileHeader 
+#endif
 {
     /*  Start big endian. */
     int32_t file_code;
@@ -130,7 +108,8 @@ typedef struct SFMainFileHeader
     double bb_mmin;
     double bb_mmax;
     /*  End little endian. */
-} SFMainFileHeader;
+} SFFileHeader;
+#ifdef _WIN32
 #pragma pack(pop)
 #endif
 
@@ -138,13 +117,34 @@ typedef struct SFMainFileHeader
 Byte 0 Record Number Record Number Integer Big
 Byte 4 Content Length Content Length Integer Big
 */
-typedef struct SFMainFileRecordHeader
+typedef struct SFShapeRecordHeader
 {
     /*  Start big endian. */
     int32_t record_number;
     int32_t content_length;
     /*  End big endian. */
-} SFMainFileRecordHeader;
+} SFShapeRecordHeader;
+
+/*
+    SFShapeRecord represents a shape type and its data.
+    This is not defined by the ESRI shapefile standard.
+*/
+typedef struct SFShapeRecord
+{
+    int32_t record_type;
+    int32_t record_size;
+    void* data;
+} SFShapeRecord;
+
+/*
+    SFShapes is a container for SFShapeRecords.
+    This is not defined by the ESRI shapefile standard.
+*/
+typedef struct SFShapes
+{
+    int32_t num_records;
+    SFShapeRecord** records;
+} SFShapes;
 
 /*
  Byte 0 Offset Offset Integer Big
@@ -473,14 +473,12 @@ void print_msg(const char* format, ...);
 /*  Shape file functions. */
 SFResult open_shapefile(const char* path);
 SFResult close_shapefile(void);
-SFResult validate_shapefile(void);
 SFResult read_shapes(void);
-SFPolygon read_polygon(void);
-SFPolygon read_polygon(void);
+SFResult allocate_shapes(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-/*	__SHAPEFILE_H__ */
+/*    __SHAPEFILE_H__ */
 #endif
