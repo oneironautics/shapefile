@@ -111,11 +111,6 @@ SFResult open_shapefile(const char* path)
 
     fread(&header, sizeof(SFFileHeader), 1, g_shapefile);
     
-    if ( ferror(g_shapefile) ) {
-        print_msg("Could not read shape file <%s>.\n", g_path);
-        return SF_ERROR;
-    }
-    
     if ( byteswap32(header.file_code) != SHAPEFILE_FILE_CODE || header.version != SHAPEFILE_VERSION ) {
         print_msg("File <%s> is not a shape file.\n", g_path);
         return SF_ERROR;
