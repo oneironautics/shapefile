@@ -133,7 +133,7 @@ typedef struct SFShapeRecord
 {
     int32_t record_type;
     int32_t record_size;
-    void* data;
+    int32_t record_offset;
 } SFShapeRecord;
 
 /*
@@ -142,7 +142,7 @@ typedef struct SFShapeRecord
 */
 typedef struct SFShapes
 {
-    int32_t num_records;
+    uint32_t num_records;
     SFShapeRecord** records;
 } SFShapes;
 
@@ -469,12 +469,36 @@ extern "C"
 /*  Utility functions. */
 int32_t byteswap32(int32_t value);
 void print_msg(const char* format, ...);
+const char* shape_type_to_name(const int32_t shape_type);
 
 /*  Shape file functions. */
 SFResult open_shapefile(const char* path);
 SFResult close_shapefile(void);
 SFResult read_shapes(void);
 SFResult allocate_shapes(void);
+const char* get_shapefile_path(void);
+const SFShapes* get_shape_records(void);
+const SFShapeRecord* get_shape_record(const uint32_t index);
+
+SFNull* get_null_shape(const SFShapeRecord* record);
+SFPoint* get_point_shape(const SFShapeRecord* record);
+SFPolyLine* get_polyline_shape(const SFShapeRecord* record);
+SFPolygon* get_polygon_shape(const SFShapeRecord* record);
+SFMultiPoint* get_multipoint_shape(const SFShapeRecord* record);
+SFPointZ* get_pointz_shape(const SFShapeRecord* record);
+SFPolyLineZ* get_polylinez_shape(const SFShapeRecord* record);
+SFPolygonZ* get_polygonz_shape(const SFShapeRecord* record);
+SFMultiPointZ* get_multipointz_shape(const SFShapeRecord* record);
+SFPointM* get_pointm_shape(const SFShapeRecord* record);
+SFPolyLineM* get_polylinem_shape(const SFShapeRecord* record);
+SFPolygonM* get_polygonm_shape(const SFShapeRecord* record);
+SFMultiPointM* get_multipointm_shape(const SFShapeRecord* record);
+SFMultiPatch* get_multipatch_shape(const SFShapeRecord* record);
+
+void free_null_shape(SFNull* null);
+void free_point_shape(SFPoint* point);
+void free_polyline_shape(SFPolyLine* polyline);
+void free_polygon_shape(SFPolygon* polygon);
 
 #ifdef __cplusplus
 }
