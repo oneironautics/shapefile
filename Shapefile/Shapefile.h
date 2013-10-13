@@ -126,8 +126,8 @@ typedef struct SFShapeRecordHeader
 } SFShapeRecordHeader;
 
 /*
-    SFShapeRecord represents a shape type and its data.
-    This is not defined by the ESRI shapefile standard.
+SFShapeRecord represents a shape type and its data.
+This is not defined by the ESRI shapefile standard.
 */
 typedef struct SFShapeRecord
 {
@@ -137,8 +137,8 @@ typedef struct SFShapeRecord
 } SFShapeRecord;
 
 /*
-    SFShapes is a container for SFShapeRecords.
-    This is not defined by the ESRI shapefile standard.
+SFShapes is a container for SFShapeRecords.
+This is not defined by the ESRI shapefile standard.
 */
 typedef struct SFShapes
 {
@@ -156,40 +156,34 @@ typedef struct SFIndexRecordHeader
     int32_t content_length;
 } SFIndexRecordHeader;
 
-/* Null shape.
- 
+/*
+Null shape.
 Byte 0 Shape Type 0 Integer 1 Little
- 
- */
-
+*/
 typedef struct SFNull
 {
     int32_t shape_type;
 } SFNull;
 
-/* Point shape.
- 
+/* 
+Point shape.
 Byte 0 Shape Type 1 Integer 1 Little
 Byte 4 X X Double 1 Little
 Byte 12 Y Y Double 1 Little
- 
- */
-
+*/
 typedef struct SFPoint
 {
     double x;
     double y;
 } SFPoint;
 
-/* MultiPoint shape.
- 
- Byte 0 Shape Type 8 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumPoints NumPoints Integer 1 Little
- Byte 40 Points Points Point NumPoints Little
- 
+/* 
+MultiPoint shape.
+Byte 0 Shape Type 8 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumPoints NumPoints Integer 1 Little
+Byte 40 Points Points Point NumPoints Little
 */
-
 typedef struct SFMultiPoint
 {
     double box[4];
@@ -197,17 +191,15 @@ typedef struct SFMultiPoint
     SFPoint* points;
 } SFMultiPoint;
 
-/* PolyLine shape.
- 
- Byte 0 Shape Type 3 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumParts NumParts Integer 1 Little
- Byte 40 NumPoints NumPoints Integer 1 Little
- Byte 44 Parts Parts Integer NumParts Little
- Byte X Points Points Point NumPoints Little
- 
+/* 
+PolyLine shape.
+Byte 0 Shape Type 3 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumParts NumParts Integer 1 Little
+Byte 40 NumPoints NumPoints Integer 1 Little
+Byte 44 Parts Parts Integer NumParts Little
+Byte X Points Points Point NumPoints Little
 */
-
 typedef struct SFPolyLine
 {
     double box[4];
@@ -217,17 +209,15 @@ typedef struct SFPolyLine
     SFPoint* points;    
 } SFPolyLine;
 
-/* Polygon shape.
- 
- Byte 0 Shape Type 5 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumParts NumParts Integer 1 Little
- Byte 40 NumPoints NumPoints Integer 1 Little
- Byte 44 Parts Parts Integer NumParts Little
- Byte X Points Points Point NumPoints Little
- 
- */
-
+/* 
+Polygon shape.
+Byte 0 Shape Type 5 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumParts NumParts Integer 1 Little
+Byte 40 NumPoints NumPoints Integer 1 Little
+Byte 44 Parts Parts Integer NumParts Little
+Byte X Points Points Point NumPoints Little
+*/
 typedef struct SFPolygon
 {
     double box[4];
@@ -238,15 +228,13 @@ typedef struct SFPolygon
 } SFPolygon;
 
 
-/* PointM shape.
- 
- Byte 0 Shape Type 21 Integer 1 Little
- Byte 4 X X Double 1 Little
- Byte 12 Y Y Double 1 Little
- Byte 20 M M Double 1 Little
- 
+/*
+PointM shape.
+Byte 0 Shape Type 21 Integer 1 Little
+Byte 4 X X Double 1 Little
+Byte 12 Y Y Double 1 Little
+Byte 20 M M Double 1 Little
 */
-
 typedef struct SFPointM
 {
     double x;
@@ -254,18 +242,16 @@ typedef struct SFPointM
     double m;
 } SFPointM;
 
-/* MultiPointM shape.
- 
- Byte 0 Shape Type 28 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumPoints NumPoints Integer 1 Little
- Byte 40 Points Points Point NumPoints Little
- Byte X* Mmin Mmin Double 1 Little
- Byte X+8* Mmax Mmax Double 1 Little
- Byte X+16* Marray Marray Double NumPoints Little
- 
+/*
+MultiPointM shape.
+Byte 0 Shape Type 28 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumPoints NumPoints Integer 1 Little
+Byte 40 Points Points Point NumPoints Little
+Byte X* Mmin Mmin Double 1 Little
+Byte X+8* Mmax Mmax Double 1 Little
+Byte X+16* Marray Marray Double NumPoints Little
 */
-
 typedef struct SFMultiPointM
 {
     double box[4];
@@ -275,20 +261,18 @@ typedef struct SFMultiPointM
     double* m_array;
 } SFMultiPointM;
 
-/* PolyLineM shape.
-  
- Byte 0 Shape Type 23 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumParts NumParts Integer 1 Little
- Byte 40 NumPoints NumPoints Integer 1 Little
- Byte 44 Parts Parts Integer NumParts Little
- Byte X Points Points Point NumPoints Little
- Byte Y* Mmin Mmin Double 1 Little
- Byte Y + 8* Mmax Mmax Double 1 Little
- Byte Y + 16* Marray Marray Double NumPoints Little
- 
+/*
+PolyLineM shape.
+Byte 0 Shape Type 23 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumParts NumParts Integer 1 Little
+Byte 40 NumPoints NumPoints Integer 1 Little
+Byte 44 Parts Parts Integer NumParts Little
+Byte X Points Points Point NumPoints Little
+Byte Y* Mmin Mmin Double 1 Little
+Byte Y + 8* Mmax Mmax Double 1 Little
+Byte Y + 16* Marray Marray Double NumPoints Little
 */
-
 typedef struct SFPolyLineM
 {
     double box[4];
@@ -300,39 +284,37 @@ typedef struct SFPolyLineM
     double* m_array;
 } SFPolyLineM;
 
-/* PolygonM shape.
- 
- Byte 0 Shape Type 25 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumParts NumParts Integer 1 Little
- Byte 40 NumPoints NumPoints Integer 1 Little
- Byte 44 Parts Parts Integer NumParts Little
- Byte X Points Points Point NumPoints Little
- Byte Y* Mmin Mmin Double 1 Little
- Byte Y + 8* Mmax Mmax Double 1 Little
- Byte Y + 16* Marray Marray Double NumPoints Little
- 
- */
+/*
+PolygonM shape.
+Byte 0 Shape Type 25 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumParts NumParts Integer 1 Little
+Byte 40 NumPoints NumPoints Integer 1 Little
+Byte 44 Parts Parts Integer NumParts Little
+Byte X Points Points Point NumPoints Little
+Byte Y* Mmin Mmin Double 1 Little
+Byte Y + 8* Mmax Mmax Double 1 Little
+Byte Y + 16* Marray Marray Double NumPoints Little
+*/
 
 typedef struct SFPolygonM
 {
     double box[4];
     int32_t num_parts;
     int32_t num_points;
-    int32_t parts;
+    int32_t* parts;
     SFPoint* points;
     double m_range[2];
     double* m_array;
 } SFPolygonM;
 
-/* PointZ shape.
- 
- Byte 0 Shape Type 11 Integer 1 Little
- Byte 4 X X Double 1 Little
- Byte 12 Y Y Double 1 Little
- Byte 20 Z Z Double 1 Little
- Byte 28 Measure M Double 1 Little
- 
+/*
+PointZ shape.
+Byte 0 Shape Type 11 Integer 1 Little
+Byte 4 X X Double 1 Little
+Byte 12 Y Y Double 1 Little
+Byte 20 Z Z Double 1 Little
+Byte 28 Measure M Double 1 Little
 */
 
 typedef struct SFPointZ
@@ -343,21 +325,19 @@ typedef struct SFPointZ
     double m;
 } SFPointZ;
 
-/* MultiPointZ shape.
- 
- Byte 0 Shape Type 18 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumPoints NumPoints Integer 1 Little
- Byte 40 Points Points Point NumPoints Little
- Byte X Zmin Zmin Double 1 Little
- Byte X+8 Zmax Zmax Double 1 Little
- Byte X+16 Zarray Zarray Double NumPoints Little
- Byte Y* Mmin Mmin Double 1 Little
- Byte Y+8* Mmax Mmax Double 1 Little
- Byte Y+16* Marray Marray Double NumPoints Littl
- 
+/*
+MultiPointZ shape.
+Byte 0 Shape Type 18 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumPoints NumPoints Integer 1 Little
+Byte 40 Points Points Point NumPoints Little
+Byte X Zmin Zmin Double 1 Little
+Byte X+8 Zmax Zmax Double 1 Little
+Byte X+16 Zarray Zarray Double NumPoints Little
+Byte Y* Mmin Mmin Double 1 Little
+Byte Y+8* Mmax Mmax Double 1 Little
+Byte Y+16* Marray Marray Double NumPoints Littl
 */
-
 typedef struct SFMultiPointZ
 {
     double box[4];
@@ -369,23 +349,21 @@ typedef struct SFMultiPointZ
     double* m_array;
 } SFMultiPointZ;
 
-/* PolyLineZ shape.
- 
- Byte 0 Shape Type 13 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumParts NumParts Integer 1 Little
- Byte 40 NumPoints NumPoints Integer 1 Little
- Byte 44 Parts Parts Integer NumParts Little
- Byte X Points Points Point NumPoints Little
- Byte Y Zmin Zmin Double 1 Little
- Byte Y + 8 Zmax Zmax Double 1 Little
- Byte Y + 16 Zarray Zarray Double NumPoints Little
- Byte Z* Mmin Mmin Double 1 Little
- Byte Z+8* Mmax Mmax Double 1 Little
- Byte Z+16* Marray Marray Double NumPoints Littl
- 
+/*
+PolyLineZ shape.
+Byte 0 Shape Type 13 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumParts NumParts Integer 1 Little
+Byte 40 NumPoints NumPoints Integer 1 Little
+Byte 44 Parts Parts Integer NumParts Little
+Byte X Points Points Point NumPoints Little
+Byte Y Zmin Zmin Double 1 Little
+Byte Y + 8 Zmax Zmax Double 1 Little
+Byte Y + 16 Zarray Zarray Double NumPoints Little
+Byte Z* Mmin Mmin Double 1 Little
+Byte Z+8* Mmax Mmax Double 1 Little
+Byte Z+16* Marray Marray Double NumPoints Littl
 */
-
 typedef struct SFPolyLineZ
 {
     double box[4];
@@ -399,23 +377,21 @@ typedef struct SFPolyLineZ
     double* m_array;
 } SFPolyLineZ;
 
-/* PolygonZ shape.
- 
- Byte 0 Shape Type 15 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumParts NumParts Integer 1 Little
- Byte 40 NumPoints NumPoints Integer 1 Little
- Byte 44 Parts Parts Integer NumParts Little
- Byte X Points Points Point NumPoints Little
- Byte Y Zmin Zmin Double 1 Little
- Byte Y+8 Zmax Zmax Double 1 Little
- Byte Y+16 Zarray Zarray Double NumPoints Little
- Byte Z* Mmin Mmin Double 1 Little
- Byte Z+8* Mmax Mmax Double 1 Little
- Byte Z+16* Marray Marray Double NumPoints Littl
- 
+/*
+PolygonZ shape.
+Byte 0 Shape Type 15 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumParts NumParts Integer 1 Little
+Byte 40 NumPoints NumPoints Integer 1 Little
+Byte 44 Parts Parts Integer NumParts Little
+Byte X Points Points Point NumPoints Little
+Byte Y Zmin Zmin Double 1 Little
+Byte Y+8 Zmax Zmax Double 1 Little
+Byte Y+16 Zarray Zarray Double NumPoints Little
+Byte Z* Mmin Mmin Double 1 Little
+Byte Z+8* Mmax Mmax Double 1 Little
+Byte Z+16* Marray Marray Double NumPoints Littl
 */
-
 typedef struct SFPolygonZ
 {
     double box[4];
@@ -429,24 +405,22 @@ typedef struct SFPolygonZ
     double* m_array;
 } SFPolygonZ;
 
-/*  MultiPatch shape.
- 
- Byte 0 Shape Type 31 Integer 1 Little
- Byte 4 Box Box Double 4 Little
- Byte 36 NumParts NumParts Integer 1 Little
- Byte 40 NumPoints NumPoints Integer 1 Little
- Byte 44 Parts Parts Integer NumParts Little
- Byte W PartTypes PartTypes Integer NumParts Little
- Byte X Points Points Point NumPoints Little
- Byte Y Zmin Zmin Double 1 Little
- Byte Y+8 Zmax Zmax Double 1 Little
- Byte Y+16 Zarray Zarray Double NumPoints Little
- Byte Z* Mmin Mmin Double 1 Little
- Byte Z+8* Mmax Mmax Double 1 Little
- Byte Z+16* Marray Marray Double NumPoints Littl
- 
+/*
+MultiPatch shape.
+Byte 0 Shape Type 31 Integer 1 Little
+Byte 4 Box Box Double 4 Little
+Byte 36 NumParts NumParts Integer 1 Little
+Byte 40 NumPoints NumPoints Integer 1 Little
+Byte 44 Parts Parts Integer NumParts Little
+Byte W PartTypes PartTypes Integer NumParts Little
+Byte X Points Points Point NumPoints Little
+Byte Y Zmin Zmin Double 1 Little
+Byte Y+8 Zmax Zmax Double 1 Little
+Byte Y+16 Zarray Zarray Double NumPoints Little
+Byte Z* Mmin Mmin Double 1 Little
+Byte Z+8* Mmax Mmax Double 1 Little
+Byte Z+16* Marray Marray Double NumPoints Littl
 */
-
 typedef struct SFMultiPatch
 {
     double box[4];
@@ -482,23 +456,33 @@ const SFShapeRecord* get_shape_record(const uint32_t index);
 
 SFNull* get_null_shape(const SFShapeRecord* record);
 SFPoint* get_point_shape(const SFShapeRecord* record);
+SFMultiPoint* get_multipoint_shape(const SFShapeRecord* record);
 SFPolyLine* get_polyline_shape(const SFShapeRecord* record);
 SFPolygon* get_polygon_shape(const SFShapeRecord* record);
-SFMultiPoint* get_multipoint_shape(const SFShapeRecord* record);
-SFPointZ* get_pointz_shape(const SFShapeRecord* record);
-SFPolyLineZ* get_polylinez_shape(const SFShapeRecord* record);
-SFPolygonZ* get_polygonz_shape(const SFShapeRecord* record);
-SFMultiPointZ* get_multipointz_shape(const SFShapeRecord* record);
 SFPointM* get_pointm_shape(const SFShapeRecord* record);
+SFMultiPointM* get_multipointm_shape(const SFShapeRecord* record);
 SFPolyLineM* get_polylinem_shape(const SFShapeRecord* record);
 SFPolygonM* get_polygonm_shape(const SFShapeRecord* record);
-SFMultiPointM* get_multipointm_shape(const SFShapeRecord* record);
+SFPointZ* get_pointz_shape(const SFShapeRecord* record);
+SFMultiPointZ* get_multipointz_shape(const SFShapeRecord* record);
+SFPolyLineZ* get_polylinez_shape(const SFShapeRecord* record);
+SFPolygonZ* get_polygonz_shape(const SFShapeRecord* record);
 SFMultiPatch* get_multipatch_shape(const SFShapeRecord* record);
 
 void free_null_shape(SFNull* null);
 void free_point_shape(SFPoint* point);
+void free_multipoint_shape(SFMultiPoint* multipoint);
 void free_polyline_shape(SFPolyLine* polyline);
 void free_polygon_shape(SFPolygon* polygon);
+void free_pointm_shape(SFPointM* pointm);
+void free_multipointm_shape(SFMultiPointM* multipointm);
+void free_polylinem_shape(SFPolyLineM* polylinem);
+void free_polygonm_shape(SFPolygonM* polygonm);
+void free_pointz_shape(SFPointZ* pointz);
+void free_multipointz_shape(SFMultiPointZ* multipointz);
+void free_polylinez_shape(SFPolyLineZ* polylinez);
+void free_polygonz_shape(SFPolygonZ* polygonz);
+void free_multipatch_shape(SFMultiPatch* multipatch);
 
 #ifdef __cplusplus
 }
