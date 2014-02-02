@@ -9,7 +9,7 @@ Usage example:
     /* Opens the file and ensures it's a valid ESRI shapefile. */
     FILE* pShapefile = open_shapefile(path);
 
-	if ( pShapefile == 0) {
+	if ( pShapefile == 0 ) {
 		return 1;
 	}
 
