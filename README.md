@@ -20,5 +20,3 @@ Usage:
     }
 
     close_shapefile();
-
-Test;
