@@ -28,10 +28,6 @@ THE SOFTWARE.
 
 #include "Shapefile.h"
 
-const char* g_path;
-FILE* g_shapefile;
-SFShapes* g_shapes;
-
 /*
 int32_t byteswap32(int32_t value)
 
@@ -133,231 +129,239 @@ const char* shape_type_to_name(const int32_t shape_type)
 }
 
 /*
-const char* get_shapefile_path(void)
+FILE* open_shapefile(const char* path)
 
-Returns the path to the shapefile.
-
-Arguments:
-    N/A.
-    
-Returns:
-    A const char* representing the path to the shapefile.
-*/
-const char* get_shapefile_path(void)
-{
-    return g_path;
-}
-
-/*
-const SFShapes* get_shape_records(void)
-
-Returns all shape records.
-
-Arguments:
-    N/A.
-    
-Returns:
-    A const SFShapes*.
-*/
-const SFShapes* get_shape_records(void)
-{
-    return g_shapes;
-}
-
-/*
-SFResult open_shapefile(const char* path)
-
-Opens a shapefile for reading.
+Opens a shapefile for reading. The caller is responsible for closing the file via
+close_shapefile() when it is no longer necessary.
 
 Arguments:
     const char* path: the path to the shapefile to open.
     
 Returns:
-    SF_ERROR: the shapefile could not be opened.
-    SF_OK: the shapefile could be opened.
+    FILE*: a file pointer to the open shapefile.
+    NULL: the shapefile could not be opened or was not a shapefile.
 */
-SFResult open_shapefile(const char* path)
+FILE* open_shapefile(const char* path)
 {
     SFFileHeader header;
-    g_path = path;
+    
+	FILE* pShapefile;
 
 #ifdef _WIN32
-    fopen_s(&g_shapefile, g_path, "rb");
+	fopen_s(&pShapefile, path, "rb");
 #else
-    g_shapefile = fopen(g_path, "rb");
+	pShapefile = fopen(path, "rb");
 #endif
     
-    if ( g_shapefile == 0 ) {
-        print_msg("Could not open shape file <%s>.", g_path);
-        return SF_ERROR;
+	if ( pShapefile == NULL ) {
+        print_msg("Could not open shape file <%s>.", path);
+		return NULL;
     }
 
-    fread(&header, sizeof(SFFileHeader), 1, g_shapefile);
+	fread(&header, sizeof(SFFileHeader), 1, pShapefile);
     
     if ( byteswap32(header.file_code) != SHAPEFILE_FILE_CODE || header.version != SHAPEFILE_VERSION ) {
-        print_msg("File <%s> is not a shape file.\n", g_path);
-        return SF_ERROR;
+        print_msg("File <%s> is not a shape file.\n", path);
+		return NULL;
     }
     
-    return SF_OK;
+	return pShapefile;
 }
 
 /*
-SFResult close_shapefile(void)
+void close_shapefile(void)
 
-Closes the shapefile and frees all memory associated with it.
+Closes the shapefile.
 
 Arguments:
-    N/A.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
     
 Returns:
-    SF_OK: no errors occurred.
+    N/A.
 */
-SFResult close_shapefile(void)
+void close_shapefile(FILE* pShapefile)
+{
+	if ( pShapefile != NULL ) {
+		fclose(pShapefile);
+		pShapefile = NULL;
+    }
+}
+
+/*
+void free_shapes(SFShapes* pShapes)
+
+Frees all memory associated with the SFShapes*.
+
+Arguments:
+    SFShapes* pShapes: the SFShapes* to free.
+    
+Returns:
+    N/A.
+*/
+void free_shapes(SFShapes* pShapes)
 {
     uint32_t x = 0;
 
-    /*  Close the shapefile. */
-    if ( g_shapefile != 0 ) {
-        fclose(g_shapefile);
-        g_shapefile = 0;
-    }
-
-    /*  Free all memory. */
-    if ( g_shapes != 0 ) {
-        for ( ; x < g_shapes->num_records; ++x ) {
-            free(g_shapes->records[x]);
+	if ( pShapes != NULL ) {
+        for ( ; x < pShapes->num_records; ++x ) {
+            free(pShapes->records[x]);
+            pShapes->records[x] = NULL;
         }
 
-        free(g_shapes->records);
-        free(g_shapes);
-        g_shapes = 0;
+        free(pShapes->records);
+        free(pShapes);
+        pShapes = NULL;
     }
-    
-    return SF_OK;
 }
 
 /*
-void allocate_shapes(void)
+const char* get_shapefile_type(void)
+
+Returns the shapefile's shape type as defined in the file header.
+
+Arguments:
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+
+Returns:
+    const char*: a string describing the file's shape type.
+*/
+const char* get_shapefile_type(FILE* pShapefile)
+{
+    int32_t pos = 0;
+	SFFileHeader header;
+
+    pos = ftell(pShapefile);
+	fseek(pShapefile, 0, SEEK_SET);
+	fread(&header, sizeof(SFFileHeader), 1, pShapefile);
+    fseek(pShapefile, pos, SEEK_SET);
+
+	return shape_type_to_name(header.shape_type);
+}
+
+/*
+SFShapes* allocate_shapes(void)
 
 Allocates memory for shapefile records read from the shapefile.
 
 Arguments:
-    N/A.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
     
 Returns:
-    SF_OK: no errors occurred.
-    SF_ERROR: out of memory, or something equally catastrophic.
+    SFShapes*: an allocated structure of shape records.
+    NULL: an out of memory condition was encountered.
 */
-SFResult allocate_shapes(void)
+SFShapes* allocate_shapes(FILE* pShapefile)
 {
     int32_t x = 0;
     int32_t num_records = 0;
     int32_t content_length = 0;
+	SFShapes* pShapes = NULL;
 
     /*  Read each shape record header and tally up the content length/number of records. */
-    while ( !feof(g_shapefile) ) {
+	while ( !feof(pShapefile) ) {
         SFShapeRecordHeader header;
         int32_t shape_type = 0;
 
-        fread(&header, sizeof(SFShapeRecordHeader), 1, g_shapefile);
+		fread(&header, sizeof(SFShapeRecordHeader), 1, pShapefile);
 
-        if ( feof(g_shapefile) ) {
+		if ( feof(pShapefile) ) {
             break;
         }
 
         header.content_length = byteswap32(header.content_length);
         header.record_number = byteswap32(header.record_number);
-        fread(&shape_type, sizeof(int32_t), 1, g_shapefile);
+		fread(&shape_type, sizeof(int32_t), 1, pShapefile);
         /*  Note: content_length is the number of 16 bit numbers, not a byte count. Multiply by sizeof(int16_t). */
-        fseek(g_shapefile, header.content_length * sizeof(int16_t) - sizeof(int32_t), SEEK_CUR);
+		fseek(pShapefile, header.content_length * sizeof(int16_t)-sizeof(int32_t), SEEK_CUR);
         content_length += header.content_length * sizeof(int16_t) - sizeof(int32_t);
         num_records++;
     }
 
     /*  Seek back to the end of the main file header. */
-    fseek(g_shapefile, sizeof(SFFileHeader), SEEK_SET);
+	fseek(pShapefile, sizeof(SFFileHeader), SEEK_SET);
     
     /*  Allocate enough memory for the record index. */
-    g_shapes = (SFShapes*)malloc(sizeof(SFShapes));
+	pShapes = (SFShapes*)malloc(sizeof(SFShapes));
 
-    if ( g_shapes == 0 ) {
-        print_msg("Could not allocate memory for g_shapes!");
-        return SF_ERROR;
+	if ( pShapes == NULL ) {
+        print_msg("Could not allocate memory for shapes!");
+		return NULL;
     }
 
-    g_shapes->records = (SFShapeRecord**)malloc(sizeof(SFShapeRecord) * (num_records + 1));
+	pShapes->records = (SFShapeRecord**)malloc(sizeof(SFShapeRecord)* (num_records + 1));
 
-    if ( g_shapes->records == 0 ) {
+	if ( pShapes->records == NULL ) {
         print_msg("Could not allocate memory for g_shapes->records!");
-        return SF_ERROR;
+		return NULL;
     }
 
     for ( x = 0; x < num_records; ++x ) {
-        g_shapes->records[x] = (SFShapeRecord*)malloc(sizeof(SFShapeRecord));
+		pShapes->records[x] = (SFShapeRecord*)malloc(sizeof(SFShapeRecord));
 
-        if ( g_shapes->records[x] == 0 ) {
+		if ( pShapes->records[x] == NULL ) {
             print_msg("Could not allocate memory for g_shapes->records[%d]!", x);
-            return SF_ERROR;
+			return NULL;
         }
     }
     
-    g_shapes->num_records = num_records;
+	pShapes->num_records = num_records;
 
-    return SF_OK;
+    return pShapes;
 }
 
 /*
-SFResult read_shapes(void)
+SFShapes* read_shapes(FILE* pShapefile)
 
 Reads shapes from a shapefile.
 
 Arguments:
-    N/A.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
     
 Returns:
-    SF_ERROR: an error was encountered during reading of shapefiles.
-    SF_OK: no errors occurred.
+    SFShapes*: an allocated structure of shape records.
+    NULL: an out of memory condition was encountered.
 */
-SFResult read_shapes(void)
+SFShapes* read_shapes(FILE* pShapefile)
 {
     int32_t index = 0;
 
-    if ( allocate_shapes() == SF_ERROR ) {
-        return SF_ERROR;
+    SFShapes* pShapes = allocate_shapes(pShapefile);
+
+    if ( pShapes == NULL ) {
+        return NULL;
     }
 
-    while ( !feof(g_shapefile) ) {
+    while ( !feof(pShapefile) ) {
         /*  Read a file record header. */
         SFShapeRecordHeader header;
         int32_t shape_type = 0;
 
-        fread(&header, sizeof(SFShapeRecordHeader), 1, g_shapefile);
+        fread(&header, sizeof(SFShapeRecordHeader), 1, pShapefile);
 
-        if ( feof(g_shapefile) ) {
+        if ( feof(pShapefile) ) {
             break;
         }
 
         header.content_length = byteswap32(header.content_length);
         header.record_number = byteswap32(header.record_number);
-        fread(&shape_type, sizeof(int32_t), 1, g_shapefile);
+		fread(&shape_type, sizeof(int32_t), 1, pShapefile);
 
 #ifdef DEBUG
         print_msg("Record %d, length %d (%d bytes), %s.\n", header.record_number, header.content_length, header.content_length * sizeof(int16_t), shape_type_to_name(shape_type));
 #endif
         /*  Note: content_length is the number of 16 bit numbers, not a byte count. Multiply by sizeof(int16_t). */
-        g_shapes->records[index]->record_size = header.content_length * sizeof(int16_t) - sizeof(int32_t);
-        g_shapes->records[index]->record_type = shape_type;
-        g_shapes->records[index]->record_offset = ftell(g_shapefile);
-        fseek(g_shapefile, header.content_length * sizeof(int16_t) - sizeof(int32_t), SEEK_CUR);
+		pShapes->records[index]->record_size = header.content_length * sizeof(int16_t)-sizeof(int32_t);
+		pShapes->records[index]->record_type = shape_type;
+		pShapes->records[index]->record_offset = ftell(pShapefile);
+		fseek(pShapefile, header.content_length * sizeof(int16_t)-sizeof(int32_t), SEEK_CUR);
         index++;
     }
     
-    return SF_OK;
+    return pShapes;
 }
 
 /*
-const void* get_shape_record(const uint32_t index)
+const SFShapeRecord* get_shape_record(const uint32_t index)
 
 Retrieves an SFShapeRecord* at the specified index.
 
@@ -365,78 +369,91 @@ Arguments:
     const uint32_t index: the index of the shape record to retrieve.
 
 Returns:
-    A const SFShapeRecord*.
+    const SFShapeRecord*: the requested shape record.
+    NULL: the index was invalid.
 */
-const SFShapeRecord* get_shape_record(const uint32_t index)
+const SFShapeRecord* get_shape_record(const SFShapes* pShapes, const uint32_t index)
 {
-    if ( index >= g_shapes->num_records ) {
-        return 0;
+    if ( index >= pShapes->num_records ) {
+        return NULL;
     }
 
-    return g_shapes->records[index];
+    return pShapes->records[index];
 }
 
 /*
-SFNull* get_null_shape(const SFShapeRecord* record)
+SFNull* get_null_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a Null shape from the specified record.
+Retrieves a Null shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_null_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFNull* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFNull* data to return.
 
 Returns:
-    A SFNull*, or 0 if the record type did not match.
+    SFNull*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFNull* get_null_shape(const SFShapeRecord* record)
+SFNull* get_null_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
-    SFNull* null;
+    SFNull* null = NULL;
 
-    if ( record->record_type != stNull ) {
-        return 0;
+    if ( pRecord->record_type != stNull ) {
+        return NULL;
     }
 
     null = (SFNull*)malloc(sizeof(SFNull));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(&null->shape_type, sizeof(SFNull), 1, g_shapefile);
+    if ( null == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(&null->shape_type, sizeof(SFNull), 1, pShapefile);
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
 #endif
 
     return null;
 }
 
 /*
-SFPoint* get_point_shape(const SFShapeRecord* record)
+SFPoint* get_point_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a Point shape from the specified record.
+Retrieves a Point shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_point_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFPoint* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFPoint* data to return.
 
 Returns:
-    A SFPoint*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFPoint*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFPoint* get_point_shape(const SFShapeRecord* record)
+SFPoint* get_point_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
-    SFPoint* point;
+    SFPoint* point = NULL;
 
-    if ( record->record_type != stPoint ) {
-        return 0;
+    if ( pRecord->record_type != stPoint ) {
+        return NULL;
     }
 
     point = (SFPoint*)malloc(sizeof(SFPoint));
 
-    if ( point == 0 ) {
-        return 0;
+    if ( point == NULL ) {
+        return NULL;
     }
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(&point, sizeof(SFPoint), 1, g_shapefile);
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(&point, sizeof(SFPoint), 1, pShapefile);
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tPoint values:\n");
     print_msg("\t\tx => %lf\n", point->x);
     print_msg("\t\ty => %lf\n", point->y);
@@ -446,36 +463,44 @@ SFPoint* get_point_shape(const SFShapeRecord* record)
 }
 
 /*
-const SFMultiPoint* get_multipoint_shape(const SFShapeRecord* record)
+const SFMultiPoint* get_multipoint_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a MultiPoint shape from the specified record.
+Retrieves a MultiPoint shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_multipoint_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFMultiPoint* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFMultiPoint* data to return.
 
 Returns:
-    A const SFMultiPoint*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFMultiPoint*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFMultiPoint* get_multipoint_shape(const SFShapeRecord* record)
+SFMultiPoint* get_multipoint_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
-    SFMultiPoint* multipoint;
+    SFMultiPoint* multipoint = NULL;
 
-    if ( record->record_type != stMultiPoint ) {
-        return 0;
+    if ( pRecord->record_type != stMultiPoint ) {
+        return NULL;
     }
 
     multipoint = (SFMultiPoint*)malloc(sizeof(SFMultiPoint));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(multipoint->box, sizeof(multipoint->box), 1, g_shapefile);
-    fread(&multipoint->num_points, sizeof(int32_t), 1, g_shapefile);
+    if ( multipoint == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(multipoint->box, sizeof(multipoint->box), 1, pShapefile);
+    fread(&multipoint->num_points, sizeof(int32_t), 1, pShapefile);
 
     multipoint->points = (SFPoint*)malloc(sizeof(SFPoint) * multipoint->num_points);
-    fread(multipoint->points, sizeof(SFPoint) * multipoint->num_points, 1, g_shapefile);
+    fread(multipoint->points, sizeof(SFPoint) * multipoint->num_points, 1, pShapefile);
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tBox values:\n");
 
     for ( x = 0; x < 4; ++x ) {
@@ -493,45 +518,53 @@ SFMultiPoint* get_multipoint_shape(const SFShapeRecord* record)
 }
 
 /*
-SFPolyLine* get_polyline_shape(const SFShapeRecord* record)
+SFPolyLine* get_polyline_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a PolyLine shape from the specified record.
+Retrieves a PolyLine shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_polyline_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFPolyLine* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFPolyLine* data to return.
 
 Returns:
-    A SFPolyLine*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFPolyLine*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFPolyLine* get_polyline_shape(const SFShapeRecord* record)
+SFPolyLine* get_polyline_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
-    SFPolyLine* polyline;
+    SFPolyLine* polyline = NULL;
 
-    if ( record->record_type != stPolyline ) {
-        return 0;
+    if ( pRecord->record_type != stPolyline ) {
+        return NULL;
     }
 
     polyline = (SFPolyLine*)malloc(sizeof(SFPolyLine));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(polyline->box, sizeof(polyline->box), 1, g_shapefile);
-    fread(&polyline->num_parts, sizeof(int32_t), 1, g_shapefile);
-    fread(&polyline->num_points, sizeof(int32_t), 1, g_shapefile);
+    if ( polyline == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(polyline->box, sizeof(polyline->box), 1, pShapefile);
+    fread(&polyline->num_parts, sizeof(int32_t), 1, pShapefile);
+    fread(&polyline->num_points, sizeof(int32_t), 1, pShapefile);
 
     polyline->parts = (int32_t*)malloc(sizeof(int32_t) * polyline->num_parts);
     polyline->points = (SFPoint*)malloc(sizeof(SFPoint) * polyline->num_points);
 
     for ( x = 0; x < polyline->num_parts; ++x ) {
-        fread(&polyline->parts[x], sizeof(int32_t), 1, g_shapefile);
+        fread(&polyline->parts[x], sizeof(int32_t), 1, pShapefile);
     }
 
     for ( x = 0; x < polyline->num_points; ++x ) {
-        fread(&polyline->points[x], sizeof(SFPoint), 1, g_shapefile);
+        fread(&polyline->points[x], sizeof(SFPoint), 1, pShapefile);
     }
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tBox values:\n");
 
     for ( x = 0; x < 4; ++x ) {
@@ -555,46 +588,53 @@ SFPolyLine* get_polyline_shape(const SFShapeRecord* record)
 }
 
 /*
-SFPolygon* get_polygon_shape(const SFShapeRecord* record)
+SFPolygon* get_polygon_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a Polygon shape from the specified record. The caller is responsible for freeing 
+Retrieves a Polygon shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_polygon_shape().
 
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFPolygon* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFPolygon* data to return.
 
 Returns:
-    A SFPolygon*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFPolygon*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFPolygon* get_polygon_shape(const SFShapeRecord* record)
+SFPolygon* get_polygon_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
-    SFPolygon* polygon;
+    SFPolygon* polygon = NULL;
    
-    if ( record->record_type != stPolygon ) {
-        return 0;
+    if ( pRecord->record_type != stPolygon ) {
+        return NULL;
     }
 
     polygon = (SFPolygon*)malloc(sizeof(SFPolygon));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(polygon->box, sizeof(polygon->box), 1, g_shapefile);
-    fread(&polygon->num_parts, sizeof(int32_t), 1, g_shapefile);
-    fread(&polygon->num_points, sizeof(int32_t), 1, g_shapefile);
+    if ( polygon == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(polygon->box, sizeof(polygon->box), 1, pShapefile);
+    fread(&polygon->num_parts, sizeof(int32_t), 1, pShapefile);
+    fread(&polygon->num_points, sizeof(int32_t), 1, pShapefile);
 
     polygon->parts = (int32_t*)malloc(sizeof(int32_t) * polygon->num_parts);
     polygon->points = (SFPoint*)malloc(sizeof(SFPoint) * polygon->num_points);
 
     for ( x = 0; x < polygon->num_parts; ++x ) {
-        fread(&polygon->parts[x], sizeof(int32_t), 1, g_shapefile);
+        fread(&polygon->parts[x], sizeof(int32_t), 1, pShapefile);
     }
 
     for ( x = 0; x < polygon->num_points; ++x ) {
-        fread(&polygon->points[x], sizeof(SFPoint), 1, g_shapefile);
+        fread(&polygon->points[x], sizeof(SFPoint), 1, pShapefile);
     }
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tBox values:\n");
 
     for ( x = 0; x < 4; ++x ) {
@@ -618,35 +658,39 @@ SFPolygon* get_polygon_shape(const SFShapeRecord* record)
 }
 
 /*
-SFPointM* get_pointm_shape(const SFShapeRecord* record)
+SFPointM* get_pointm_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a PointM shape from the specified record.
+Retrieves a PointM shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_pointm_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFPointM* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFPointM* data to return.
 
 Returns:
-    A SFPointM*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFPointM*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFPointM* get_pointm_shape(const SFShapeRecord* record)
+SFPointM* get_pointm_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
-    SFPointM* pointm;
+    SFPointM* pointm = NULL;
 
-    if ( record->record_type != stPointM ) {
-        return 0;
+    if ( pRecord->record_type != stPointM ) {
+        return NULL;
     }
 
     pointm = (SFPointM*)malloc(sizeof(SFPointM));
 
-    if ( pointm == 0 ) {
-        return 0;
+    if ( pointm == NULL ) {
+        return NULL;
     }
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(&pointm, sizeof(SFPointM), 1, g_shapefile);
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(&pointm, sizeof(SFPointM), 1, pShapefile);
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tPointM values:\n");
     print_msg("\t\tx => %lf\n", pointm->x);
     print_msg("\t\ty => %lf\n", pointm->y);
@@ -656,42 +700,50 @@ SFPointM* get_pointm_shape(const SFShapeRecord* record)
 }
 
 /*
-SFMultiPointM* get_multipointm_shape(const SFShapeRecord* record)
+SFMultiPointM* get_multipointm_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a MultiPointM shape from the specified record.
+Retrieves a MultiPointM shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_multipointm_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFMultiPointM* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFMultiPointM* data to return.
 
 Returns:
-    A SFMultiPointM*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFMultiPointM*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFMultiPointM* get_multipointm_shape(const SFShapeRecord* record)
+SFMultiPointM* get_multipointm_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
-    SFMultiPointM* multipointm;
+    SFMultiPointM* multipointm = NULL;
 
-    if ( record->record_type != stMultiPointM ) {
-        return 0;
+    if ( pRecord->record_type != stMultiPointM ) {
+        return NULL;
     }
 
     multipointm = (SFMultiPointM*)malloc(sizeof(SFMultiPointM));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(multipointm->box, sizeof(multipointm->box), 1, g_shapefile);
-    fread(&multipointm->num_points, sizeof(int32_t), 1, g_shapefile);
+    if ( multipointm == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(multipointm->box, sizeof(multipointm->box), 1, pShapefile);
+    fread(&multipointm->num_points, sizeof(int32_t), 1, pShapefile);
 
     multipointm->points = (SFPoint*)malloc(sizeof(SFPoint) * multipointm->num_points);
-    fread(multipointm->points, sizeof(SFPoint) * multipointm->num_points, 1, g_shapefile);
+    fread(multipointm->points, sizeof(SFPoint) * multipointm->num_points, 1, pShapefile);
 
-    fread(multipointm->m_range, sizeof(multipointm->m_range), 1, g_shapefile);
+    fread(multipointm->m_range, sizeof(multipointm->m_range), 1, pShapefile);
 
     for ( x = 0; x < multipointm->num_points; ++x ) {
-        fread(&multipointm->m_array[x], sizeof(double), 1, g_shapefile);
+        fread(&multipointm->m_array[x], sizeof(double), 1, pShapefile);
     }
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tBox values:\n");
 
     for ( x = 0; x < 4; ++x ) {
@@ -715,51 +767,59 @@ SFMultiPointM* get_multipointm_shape(const SFShapeRecord* record)
 }
 
 /*
-SFPolyLineM* get_polylinem_shape(const SFShapeRecord* record)
+SFPolyLineM* get_polylinem_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a PolyLineM shape from the specified record.
+Retrieves a PolyLineM shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_polylinem_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFPolyLineM* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFPolyLineM* data to return.
 
 Returns:
-    A SFPolyLineM*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFPolyLineM*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFPolyLineM* get_polylinem_shape(const SFShapeRecord* record)
+SFPolyLineM* get_polylinem_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
-    SFPolyLineM* polylinem;
+    SFPolyLineM* polylinem = NULL;
 
-    if ( record->record_type != stPolyLineM ) {
-        return 0;
+    if ( pRecord->record_type != stPolyLineM ) {
+        return NULL;
     }
 
     polylinem = (SFPolyLineM*)malloc(sizeof(SFPolyLineM));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(polylinem->box, sizeof(polylinem->box), 1, g_shapefile);
-    fread(&polylinem->num_parts, sizeof(int32_t), 1, g_shapefile);
-    fread(&polylinem->num_points, sizeof(int32_t), 1, g_shapefile);
+    if ( polylinem == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(polylinem->box, sizeof(polylinem->box), 1, pShapefile);
+    fread(&polylinem->num_parts, sizeof(int32_t), 1, pShapefile);
+    fread(&polylinem->num_points, sizeof(int32_t), 1, pShapefile);
 
     polylinem->parts = (int32_t*)malloc(sizeof(int32_t) * polylinem->num_parts);
     polylinem->points = (SFPoint*)malloc(sizeof(SFPoint) * polylinem->num_points);
 
     for ( x = 0; x < polylinem->num_parts; ++x ) {
-        fread(&polylinem->parts[x], sizeof(int32_t), 1, g_shapefile);
+        fread(&polylinem->parts[x], sizeof(int32_t), 1, pShapefile);
     }
 
     for ( x = 0; x < polylinem->num_points; ++x ) {
-        fread(&polylinem->points[x], sizeof(SFPoint), 1, g_shapefile);
+        fread(&polylinem->points[x], sizeof(SFPoint), 1, pShapefile);
     }
 
-    fread(polylinem->m_range, sizeof(polylinem->m_range), 1, g_shapefile);
+    fread(polylinem->m_range, sizeof(polylinem->m_range), 1, pShapefile);
 
     for ( x = 0; x < polylinem->num_points; ++x ) {
-        fread(&polylinem->m_array[x], sizeof(double), 1, g_shapefile);
+        fread(&polylinem->m_array[x], sizeof(double), 1, pShapefile);
     }
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tBox values:\n");
 
     for ( x = 0; x < 4; ++x ) {
@@ -789,51 +849,59 @@ SFPolyLineM* get_polylinem_shape(const SFShapeRecord* record)
 }
 
 /*
-SFPolygonM* get_polygonm_shape(const SFShapeRecord* record)
+SFPolygonM* get_polygonm_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a PolygonM shape from the specified record.
+Retrieves a PolygonM shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_polygonm_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFPolygonM* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFPolygonM* data to return.
 
 Returns:
-    A SFPolygonM*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFPolygonM*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFPolygonM* get_polygonm_shape(const SFShapeRecord* record)
+SFPolygonM* get_polygonm_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
-    SFPolygonM* polygonm;
+    SFPolygonM* polygonm = NULL;
 
-    if ( record->record_type != stPolygonM ) {
-        return 0;
+    if ( pRecord->record_type != stPolygonM ) {
+        return NULL;
     }
 
     polygonm = (SFPolygonM*)malloc(sizeof(SFPolygonM));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(polygonm->box, sizeof(polygonm->box), 1, g_shapefile);
-    fread(&polygonm->num_parts, sizeof(int32_t), 1, g_shapefile);
-    fread(&polygonm->num_points, sizeof(int32_t), 1, g_shapefile);
+    if ( polygonm == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(polygonm->box, sizeof(polygonm->box), 1, pShapefile);
+    fread(&polygonm->num_parts, sizeof(int32_t), 1, pShapefile);
+    fread(&polygonm->num_points, sizeof(int32_t), 1, pShapefile);
 
     polygonm->parts = (int32_t*)malloc(sizeof(int32_t) * polygonm->num_parts);
     polygonm->points = (SFPoint*)malloc(sizeof(SFPoint) * polygonm->num_points);
 
     for ( x = 0; x < polygonm->num_parts; ++x ) {
-        fread(&polygonm->parts[x], sizeof(int32_t), 1, g_shapefile);
+        fread(&polygonm->parts[x], sizeof(int32_t), 1, pShapefile);
     }
 
     for ( x = 0; x < polygonm->num_points; ++x ) {
-        fread(&polygonm->points[x], sizeof(SFPoint), 1, g_shapefile);
+        fread(&polygonm->points[x], sizeof(SFPoint), 1, pShapefile);
     }
 
-    fread(polygonm->m_range, sizeof(polygonm->m_range), 1, g_shapefile);
+    fread(polygonm->m_range, sizeof(polygonm->m_range), 1, pShapefile);
 
     for ( x = 0; x < polygonm->num_points; ++x ) {
-        fread(&polygonm->m_array[x], sizeof(double), 1, g_shapefile);
+        fread(&polygonm->m_array[x], sizeof(double), 1, pShapefile);
     }
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tBox values:\n");
 
     for ( x = 0; x < 4; ++x ) {
@@ -863,35 +931,39 @@ SFPolygonM* get_polygonm_shape(const SFShapeRecord* record)
 }
 
 /*
-const SFPointZ* get_pointz_shape(const SFShapeRecord* record)
+SFPointZ* get_pointz_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a PointZ shape from the specified record.
+Retrieves a PointZ shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_pointz_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFPointZ* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFPointZ* data to return.
 
 Returns:
-    A const SFPointZ*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFPointZ*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFPointZ* get_pointz_shape(const SFShapeRecord* record)
+SFPointZ* get_pointz_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
-    SFPointZ* pointz;
+    SFPointZ* pointz = NULL;
 
-    if ( record->record_type != stPointZ ) {
-        return 0;
+    if ( pRecord->record_type != stPointZ ) {
+        return NULL;
     }
 
     pointz = (SFPointZ*)malloc(sizeof(SFPointZ));
 
-    if ( pointz == 0 ) {
-        return 0;
+    if ( pointz == NULL ) {
+        return NULL;
     }
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(&pointz, sizeof(SFPointZ), 1, g_shapefile);
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(&pointz, sizeof(SFPointZ), 1, pShapefile);
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\t\tx => %lf\n", pointz->x);
     print_msg("\t\ty => %lf\n", pointz->y);
 #endif
@@ -900,48 +972,56 @@ SFPointZ* get_pointz_shape(const SFShapeRecord* record)
 }
 
 /*
-SFMultiPointZ* get_multipointz_shape(const SFShapeRecord* record)
+SFMultiPointZ* get_multipointz_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a MultiPointZ shape from the specified record.
+Retrieves a MultiPointZ shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_multipointz_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFMultiPointZ* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFMultiPointZ* data to return.
 
 Returns:
-    A SFMultiPointZ*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFMultiPointZ*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFMultiPointZ* get_multipointz_shape(const SFShapeRecord* record)
+SFMultiPointZ* get_multipointz_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
-    SFMultiPointZ* multipointz;
+    SFMultiPointZ* multipointz = NULL;
 
-    if ( record->record_type != stMultiPointZ ) {
-        return 0;
+    if ( pRecord->record_type != stMultiPointZ ) {
+        return NULL;
     }
 
     multipointz = (SFMultiPointZ*)malloc(sizeof(SFMultiPointZ));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(multipointz->box, sizeof(multipointz->box), 1, g_shapefile);
-    fread(&multipointz->num_points, sizeof(int32_t), 1, g_shapefile);
-
-    multipointz->points = (SFPoint*)malloc(sizeof(SFPoint) * multipointz->num_points);
-    fread(multipointz->points, sizeof(SFPoint) * multipointz->num_points, 1, g_shapefile);
-
-    fread(multipointz->m_range, sizeof(multipointz->m_range), 1, g_shapefile);
-
-    for ( x = 0; x < multipointz->num_points; ++x ) {
-        fread(&multipointz->m_array[x], sizeof(double), 1, g_shapefile);
+    if ( multipointz == NULL ) {
+        return NULL;
     }
 
-    fread(multipointz->m_range, sizeof(multipointz->m_range), 1, g_shapefile);
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(multipointz->box, sizeof(multipointz->box), 1, pShapefile);
+    fread(&multipointz->num_points, sizeof(int32_t), 1, pShapefile);
+
+    multipointz->points = (SFPoint*)malloc(sizeof(SFPoint) * multipointz->num_points);
+    fread(multipointz->points, sizeof(SFPoint) * multipointz->num_points, 1, pShapefile);
+
+    fread(multipointz->m_range, sizeof(multipointz->m_range), 1, pShapefile);
 
     for ( x = 0; x < multipointz->num_points; ++x ) {
-        fread(&multipointz->m_array[x], sizeof(double), 1, g_shapefile);
+        fread(&multipointz->m_array[x], sizeof(double), 1, pShapefile);
+    }
+
+    fread(multipointz->m_range, sizeof(multipointz->m_range), 1, pShapefile);
+
+    for ( x = 0; x < multipointz->num_points; ++x ) {
+        fread(&multipointz->m_array[x], sizeof(double), 1, pShapefile);
     }
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tBox values:\n");
 
     for ( x = 0; x < 4; ++x ) {
@@ -971,31 +1051,39 @@ SFMultiPointZ* get_multipointz_shape(const SFShapeRecord* record)
 }
 
 /*
-const SFPolyLineZ* get_polylinez_shape(const SFShapeRecord* record)
+const SFPolyLineZ* get_polylinez_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a PolyLineZ shape from the specified record.
+Retrieves a PolyLineZ shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_polylinez_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFPolyLineZ* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFPolyLineZ* data to return.
 
 Returns:
-    A const SFPolyLineZ*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFPolyLineZ*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFPolyLineZ* get_polylinez_shape(const SFShapeRecord* record)
+SFPolyLineZ* get_polylinez_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
-    SFPolyLineZ* polylinez;
+    SFPolyLineZ* polylinez = NULL;
 
-    if ( record->record_type != stPolygonZ ) {
-        return 0;
+    if ( pRecord->record_type != stPolygonZ ) {
+        return NULL;
     }
 
     polylinez = (SFPolyLineZ*)malloc(sizeof(SFPolyLineZ));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(polylinez->box, sizeof(polylinez->box), 1, g_shapefile);
-    fread(&polylinez->num_parts, sizeof(int32_t), 1, g_shapefile);
-    fread(&polylinez->num_points, sizeof(int32_t), 1, g_shapefile);
+    if ( polylinez == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(polylinez->box, sizeof(polylinez->box), 1, pShapefile);
+    fread(&polylinez->num_parts, sizeof(int32_t), 1, pShapefile);
+    fread(&polylinez->num_points, sizeof(int32_t), 1, pShapefile);
 
     polylinez->parts = (int32_t*)malloc(sizeof(int32_t) * polylinez->num_parts);
     polylinez->points = (SFPoint*)malloc(sizeof(SFPoint) * polylinez->num_points);
@@ -1003,27 +1091,27 @@ SFPolyLineZ* get_polylinez_shape(const SFShapeRecord* record)
     polylinez->m_array = (double*)malloc(sizeof(double) * polylinez->num_points);
 
     for ( x = 0; x < polylinez->num_parts; ++x ) {
-        fread(&polylinez->parts[x], sizeof(int32_t), 1, g_shapefile);
+        fread(&polylinez->parts[x], sizeof(int32_t), 1, pShapefile);
     }
 
     for ( x = 0; x < polylinez->num_points; ++x ) {
-        fread(&polylinez->points[x], sizeof(SFPoint), 1, g_shapefile);
+        fread(&polylinez->points[x], sizeof(SFPoint), 1, pShapefile);
     }
 
-    fread(polylinez->z_range, sizeof(polylinez->z_range), 1, g_shapefile);
+    fread(polylinez->z_range, sizeof(polylinez->z_range), 1, pShapefile);
 
     for ( x = 0; x < polylinez->num_points; ++x ) {
-        fread(&polylinez->z_array[x], sizeof(double), 1, g_shapefile);
+        fread(&polylinez->z_array[x], sizeof(double), 1, pShapefile);
     }
 
-    fread(polylinez->m_range, sizeof(polylinez->m_range), 1, g_shapefile);
+    fread(polylinez->m_range, sizeof(polylinez->m_range), 1, pShapefile);
 
     for ( x = 0; x < polylinez->num_points; ++x ) {
-        fread(&polylinez->m_array[x], sizeof(double), 1, g_shapefile);
+        fread(&polylinez->m_array[x], sizeof(double), 1, pShapefile);
     }
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tBox values:\n");
 
     for ( x = 0; x < 4; ++x ) {
@@ -1059,31 +1147,39 @@ SFPolyLineZ* get_polylinez_shape(const SFShapeRecord* record)
 }
 
 /*
-SFPolygonZ* get_polygonz_shape(const SFShapeRecord* record)
+SFPolygonZ* get_polygonz_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a PolygonZ shape from the specified record.
+Retrieves a PolygonZ shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_polygonz_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFPolygonZ* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFPolygonZ* data to return.
 
 Returns:
-    A SFPolygonZ*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFPolygonZ*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFPolygonZ* get_polygonz_shape(const SFShapeRecord* record)
+SFPolygonZ* get_polygonz_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
-    SFPolygonZ* polygonz;
+    SFPolygonZ* polygonz = NULL;
 
-    if ( record->record_type != stPolygonZ ) {
-        return 0;
+    if ( pRecord->record_type != stPolygonZ ) {
+        return NULL;
     }
 
     polygonz = (SFPolygonZ*)malloc(sizeof(SFPolygonZ));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
-    fread(polygonz->box, sizeof(polygonz->box), 1, g_shapefile);
-    fread(&polygonz->num_parts, sizeof(int32_t), 1, g_shapefile);
-    fread(&polygonz->num_points, sizeof(int32_t), 1, g_shapefile);
+    if ( polygonz == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
+    fread(polygonz->box, sizeof(polygonz->box), 1, pShapefile);
+    fread(&polygonz->num_parts, sizeof(int32_t), 1, pShapefile);
+    fread(&polygonz->num_points, sizeof(int32_t), 1, pShapefile);
 
     polygonz->parts = (int32_t*)malloc(sizeof(int32_t) * polygonz->num_parts);
     polygonz->points = (SFPoint*)malloc(sizeof(SFPoint) * polygonz->num_points);
@@ -1091,27 +1187,27 @@ SFPolygonZ* get_polygonz_shape(const SFShapeRecord* record)
     polygonz->m_array = (double*)malloc(sizeof(double) * polygonz->num_points);
 
     for ( x = 0; x < polygonz->num_parts; ++x ) {
-        fread(&polygonz->parts[x], sizeof(int32_t), 1, g_shapefile);
+        fread(&polygonz->parts[x], sizeof(int32_t), 1, pShapefile);
     }
 
     for ( x = 0; x < polygonz->num_points; ++x ) {
-        fread(&polygonz->points[x], sizeof(SFPoint), 1, g_shapefile);
+        fread(&polygonz->points[x], sizeof(SFPoint), 1, pShapefile);
     }
 
-    fread(polygonz->z_range, sizeof(polygonz->z_range), 1, g_shapefile);
+    fread(polygonz->z_range, sizeof(polygonz->z_range), 1, pShapefile);
 
     for ( x = 0; x < polygonz->num_points; ++x ) {
-        fread(&polygonz->z_array[x], sizeof(double), 1, g_shapefile);
+        fread(&polygonz->z_array[x], sizeof(double), 1, pShapefile);
     }
 
-    fread(polygonz->m_range, sizeof(polygonz->m_range), 1, g_shapefile);
+    fread(polygonz->m_range, sizeof(polygonz->m_range), 1, pShapefile);
 
     for ( x = 0; x < polygonz->num_points; ++x ) {
-        fread(&polygonz->m_array[x], sizeof(double), 1, g_shapefile);
+        fread(&polygonz->m_array[x], sizeof(double), 1, pShapefile);
     }
 
 #ifdef DEBUG
-    print_msg("Data length: %d, shape type: %s\n", record->record_size, shape_type_to_name(record->record_type));
+    print_msg("Data length: %d, shape type: %s\n", pRecord->record_size, shape_type_to_name(pRecord->record_type));
     print_msg("\tBox values:\n");
 
     for ( x = 0; x < 4; ++x ) {
@@ -1147,27 +1243,35 @@ SFPolygonZ* get_polygonz_shape(const SFShapeRecord* record)
 }
 
 /*
-SFMultiPatch* get_multipatch_shape(const SFShapeRecord* record)
+SFMultiPatch* get_multipatch_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 
-Retrieves a MultiPatch shape from the specified record.
+Retrieves a MultiPatch shape from the specified record. The caller is responsible for freeing the returned pointer
+with a call to free_multipatch_shape().
+
 
 Arguments:
-    const SFShapeRecord* record: the record that contains SFMultiPatch* data to return.
+    FILE* pShapefile: a file pointer to a file opened by open_shapefile().
+    const SFShapeRecord* pRecord: the record that contains SFMultiPatch* data to return.
 
 Returns:
-    A SFMultiPatch*, or 0 if the record type did not match or an out of memory condition was encountered.
+    SFMultiPatch*: the shape.
+    NULL: the record type did not match, or an out of memory condition was encountered.
 */
-SFMultiPatch* get_multipatch_shape(const SFShapeRecord* record)
+SFMultiPatch* get_multipatch_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
-    SFMultiPatch* multipatch;
+    SFMultiPatch* multipatch = NULL;
 
-    if ( record->record_type != stMultiPatch ) {
-        return 0;
+    if ( pRecord->record_type != stMultiPatch ) {
+        return NULL;
     }
 
     multipatch = (SFMultiPatch*)malloc(sizeof(SFMultiPatch));
 
-    fseek(g_shapefile, record->record_offset, SEEK_SET);
+    if ( multipatch == NULL ) {
+        return NULL;
+    }
+
+    fseek(pShapefile, pRecord->record_offset, SEEK_SET);
 
     return multipatch;
 }
@@ -1183,53 +1287,53 @@ Arguments:
 Returns:
     N/A.
 */
-void free_null_shape(SFNull* null)
+void free_null_shape(SFNull* pNull)
 {
-    if ( null != 0 ) {
-        free(null);
-        null = 0;
+    if ( pNull != NULL ) {
+        free(pNull);
+        pNull = NULL;
     }
 }
 
 /*
-void free_point_shape(SFPoint* point)
+void free_point_shape(SFPoint* pPoint)
 
 Frees a SFPoint* returned by get_point_shape.
 
 Arguments:
-    SFPoint* point: a SFPoint* returned by get_point_shape.
+    SFPoint* pPoint: a SFPoint* returned by get_point_shape.
 
 Returns:
     N/A.
 */
-void free_point_shape(SFPoint* point)
+void free_point_shape(SFPoint* pPoint)
 {
-    if ( point != 0 ) {
-        free(point);
-        point = 0;
+    if ( pPoint != NULL ) {
+        free(pPoint);
+        pPoint = NULL;
     }
 }
 
 /*
-void free_polyline_shape(SFPolyLine* polyline)
+void free_polyline_shape(SFPolyLine* pPolyline)
 
 Frees a SFPolyLine* returned by get_polyline_shape.
 
 Arguments:
-    SFPolyLine* polyline: a SFPolyLine* returned by get_polyline_shape.
+    SFPolyLine* pPolyline: a SFPolyLine* returned by get_polyline_shape.
 
 Returns:
     N/A.
 */
-void free_polyline_shape(SFPolyLine* polyline)
+void free_polyline_shape(SFPolyLine* pPolyline)
 {
-    if ( polyline != 0 ) {
-        free(polyline->parts);
-        polyline->parts = 0;
-        free(polyline->points);
-        polyline->points = 0;
-        free(polyline);
-        polyline = 0;
+    if ( pPolyline != NULL ) {
+        free(pPolyline->parts);
+        pPolyline->parts = NULL;
+        free(pPolyline->points);
+        pPolyline->points = NULL;
+        free(pPolyline);
+        pPolyline = NULL;
     }
 }
 
@@ -1244,214 +1348,214 @@ Arguments:
 Returns:
     N/A.
 */
-void free_polygon_shape(SFPolygon* polygon)
+void free_polygon_shape(SFPolygon* pPolygon)
 {
-    if ( polygon != 0 ) {
-        free(polygon->parts);
-        polygon->parts = 0;
-        free(polygon->points);
-        polygon->points = 0;
-        free(polygon);
-        polygon = 0;
+    if ( pPolygon != NULL ) {
+        free(pPolygon->parts);
+        pPolygon->parts = NULL;
+        free(pPolygon->points);
+        pPolygon->points = NULL;
+        free(pPolygon);
+        pPolygon = NULL;
     }
 }
 
 /*
-void free_multipoint_shape(SFMultiPoint* multipoint)
+void free_multipoint_shape(SFMultiPoint* pMultipoint)
 
 Frees a SFMultiPoint* returned by get_multipoint_shape.
 
 Arguments:
-    SFMultiPoint* multipoint: a SFMultiPoint* returned by get_multipoint_shape.
+    SFMultiPoint* pMultipoint: a SFMultiPoint* returned by get_multipoint_shape.
 
 Returns:
     N/A.
 */
-void free_multipoint_shape(SFMultiPoint* multipoint)
+void free_multipoint_shape(SFMultiPoint* pMultipoint)
 {
-    if ( multipoint != 0 ) {
-        free(multipoint->points);
-        multipoint->points = 0;
-        free(multipoint);
-        multipoint = 0;
+    if ( pMultipoint != NULL ) {
+        free(pMultipoint->points);
+        pMultipoint->points = NULL;
+        free(pMultipoint);
+        pMultipoint = NULL;
     }
 }
 
 /*
-void free_pointz_shape(SFPointZ* pointz)
+void free_pointz_shape(SFPointZ* pPointz)
 
 Frees a SFPointZ* returned by get_pointz_shape.
 
 Arguments:
-    SFPointZ* pointz: a SFPointZ* returned by get_pointz_shape.
+    SFPointZ* pPointz: a SFPointZ* returned by get_pointz_shape.
 
 Returns:
     N/A.
 */
-void free_pointz_shape(SFPointZ* pointz)
+void free_pointz_shape(SFPointZ* pPointz)
 {
-    if ( pointz != 0 ) {
-        free(pointz);
-        pointz = 0;
+    if ( pPointz != NULL ) {
+        free(pPointz);
+        pPointz = NULL;
     }
 }
 
 /*
-void free_polylinez_shape(SFPolyLineZ* polylinez)
+void free_polylinez_shape(SFPolyLineZ* pPolylinez)
 
 Frees a SFPolyLineZ* returned by get_polylinez_shape.
 
 Arguments:
-    SFPolyLineZ* polylinez: a SFPolyLineZ* returned by get_polylinez_shape.
+    SFPolyLineZ* pPolylinez: a SFPolyLineZ* returned by get_polylinez_shape.
 
 Returns:
     N/A.
 */
-void free_polylinez_shape(SFPolyLineZ* polylinez)
+void free_polylinez_shape(SFPolyLineZ* pPolylinez)
 {
-    if ( polylinez != 0 ) {
-        free(polylinez);
-        polylinez = 0;
+    if ( pPolylinez != NULL ) {
+        free(pPolylinez);
+        pPolylinez = NULL;
     }
 }
 
 /*
-void free_polygonz_shape(SFPolygonZ* polygonz)
+void free_polygonz_shape(SFPolygonZ* pPolygonz)
 
 Frees a SFPolygonZ* returned by get_polygonz_shape.
 
 Arguments:
-    SFPolygonZ* polygon: a SFPolygonZ* returned by get_polygonz_shape.
+    SFPolygonZ* pPolygonz: a SFPolygonZ* returned by get_polygonz_shape.
 
 Returns:
     N/A.
 */
-void free_polygonz_shape(SFPolygonZ* polygonz)
+void free_polygonz_shape(SFPolygonZ* pPolygonz)
 {
-    if ( polygonz != 0 ) {
-        free(polygonz->parts);
-        polygonz->parts = 0;
-        free(polygonz->points);
-        polygonz->points = 0;
-        free(polygonz->z_array);
-        polygonz->z_array = 0;
-        free(polygonz->m_array);
-        polygonz->m_array = 0;
-        free(polygonz);
-        polygonz = 0;
+    if ( pPolygonz != NULL ) {
+        free(pPolygonz->parts);
+        pPolygonz->parts = NULL;
+        free(pPolygonz->points);
+        pPolygonz->points = NULL;
+        free(pPolygonz->z_array);
+        pPolygonz->z_array = NULL;
+        free(pPolygonz->m_array);
+        pPolygonz->m_array = NULL;
+        free(pPolygonz);
+        pPolygonz = NULL;
     }
 }
 
 /*
-void free_multipointz_shape(SFMultiPointZ* multipointz)
+void free_multipointz_shape(SFMultiPointZ* pMultipointz)
 
 Frees a SFMultiPointZ* returned by get_multipointz_shape.
 
 Arguments:
-    SFMultiPointZ* multipointz: a SFMultiPointZ* returned by get_multipointz_shape.
+    SFMultiPointZ* pMultipointz: a SFMultiPointZ* returned by get_multipointz_shape.
 
 Returns:
     N/A.
 */
-void free_multipointz_shape(SFMultiPointZ* multipointz)
+void free_multipointz_shape(SFMultiPointZ* pMultipointz)
 {
-    if ( multipointz != 0 ) {
-        free(multipointz);
-        multipointz = 0;
+    if ( pMultipointz != NULL ) {
+        free(pMultipointz);
+        pMultipointz = NULL;
     }
 }
 
 /*
-void free_pointm_shape(SFPointM* pointm)
+void free_pointm_shape(SFPointM* pPointm)
 
 Frees a SFPointM* returned by get_pointm_shape.
 
 Arguments:
-    SFPointM* pointm: a SFPointM* returned by get_pointm_shape.
+    SFPointM* pPointm: a SFPointM* returned by get_pointm_shape.
 
 Returns:
     N/A.
 */
-void free_pointm_shape(SFPointM* pointm)
+void free_pointm_shape(SFPointM* pPointm)
 {
-    if ( pointm != 0 ) {
-        free(pointm);
-        pointm = 0;
+    if ( pPointm != NULL ) {
+        free(pPointm);
+        pPointm = NULL;
     }
 }
 
 /*
-void free_polylinem_shape(SFPolyLineM* polylinem)
+void free_polylinem_shape(SFPolyLineM* pPolylinem)
 
 Frees a SFPolyLineM* returned by get_polylinem_shape.
 
 Arguments:
-    SFPolyLineM* polylinem: a SFPolyLineM* returned by get_polylinem_shape.
+    SFPolyLineM* pPolylinem: a SFPolyLineM* returned by get_polylinem_shape.
 
 Returns:
     N/A.
 */
-void free_polylinem_shape(SFPolyLineM* polylinem)
+void free_polylinem_shape(SFPolyLineM* pPolylinem)
 {
-    if ( polylinem != 0 ) {
-        free(polylinem);
-        polylinem = 0;
+    if ( pPolylinem != NULL ) {
+        free(pPolylinem);
+        pPolylinem = NULL;
     }
 }
 
 /*
-void free_polygonm_shape(SFPolygonM* polygonm)
+void free_polygonm_shape(SFPolygonM* pPolygonm)
 
 Frees a SFPolygonM* returned by get_polygonm_shape.
 
 Arguments:
-    SFPolygonM* polygonm: a SFPolygonM* returned by get_polygonm_shape.
+    SFPolygonM* pPolygonm: a SFPolygonM* returned by get_polygonm_shape.
 
 Returns:
     N/A.
 */
-void free_polygonm_shape(SFPolygonM* polygonm)
+void free_polygonm_shape(SFPolygonM* pPolygonm)
 {
-    if ( polygonm != 0 ) {
-        free(polygonm);
-        polygonm = 0;
+    if ( pPolygonm != NULL ) {
+        free(pPolygonm);
+        pPolygonm = NULL;
     }
 }
 
 /*
-void free_multipointm_shape(SFMultiPointM* multipointm)
+void free_multipointm_shape(SFMultiPointM* pMultipointm)
 
 Frees a SFMultiPointM* returned by get_multipointm_shape.
 
 Arguments:
-    SFMultiPointM* multipointm: a SFMultiPointM* returned by get_multipointm_shape.
+    SFMultiPointM* pMultipointm: a SFMultiPointM* returned by get_multipointm_shape.
 
 Returns:
     N/A.
 */
-void free_multipointm_shape(SFMultiPointM* multipointm)
+void free_multipointm_shape(SFMultiPointM* pMultipointm)
 {
-    if ( multipointm != 0 ) {
-        free(multipointm);
-        multipointm = 0;
+    if ( pMultipointm != NULL ) {
+        free(pMultipointm);
+        pMultipointm = NULL;
     }
 }
 
 /*
-void free_multipatch_shape(SFMultiPatch* multipatch)
+void free_multipatch_shape(SFMultiPatch* pMultipatch)
 
 Frees a SFMultiPatch* returned by get_multipatch_shape.
 
 Arguments:
-    SFMultiPatch* multipatch: a SFMultiPatch* returned by get_multipatch_shape.
+    SFMultiPatch* pMultipatch: a SFMultiPatch* returned by get_multipatch_shape.
 
 Returns:
     N/A.
 */
-void free_multipatch_shape(SFMultiPatch* multipatch)
+void free_multipatch_shape(SFMultiPatch* pMultipatch)
 {
-    if ( multipatch != 0 ) {
-        free(multipatch);
-        multipatch = 0;
+    if ( pMultipatch != NULL ) {
+        free(pMultipatch);
+        pMultipatch = NULL;
     }
 }
