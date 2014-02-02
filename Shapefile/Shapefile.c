@@ -293,7 +293,7 @@ SFResult allocate_shapes(void)
         return SF_ERROR;
     }
 
-    for ( x = 0; x < num_records + 1; ++x ) {
+    for ( x = 0; x < num_records; ++x ) {
         g_shapes->records[x] = (SFShapeRecord*)malloc(sizeof(SFShapeRecord));
 
         if ( g_shapes->records[x] == 0 ) {
@@ -302,7 +302,7 @@ SFResult allocate_shapes(void)
         }
     }
     
-    g_shapes->num_records = num_records + 1;
+    g_shapes->num_records = num_records;
 
     return SF_OK;
 }
