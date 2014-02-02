@@ -1,22 +1,38 @@
 shapefile
 =========
 
-This library was originally written to add basic ESRI shapefile support to iOS projects. It is a work in progress.
+This library intends to be a cross-platform static library for reading ESRI shapefiles.
 
-Usage:
+Usage example:
 
-    open_shapefile("E:\\source\\Shapefile\\TestData\\MyPolyZ.shp");
-    read_shapes();
-    const SFShapes* shapes = get_shape_records();
+```c
+    /* Opens the file and ensures it's a valid ESRI shapefile. */
+    FILE* pShapefile = open_shapefile(path);
 
-    for ( uint32_t x = 0; x < shapes->num_records; ++x ) {
-        const SFShapeRecord* record = get_shape_record(x);
-        SFPolygonZ* polygonz = get_polygonz_shape(record);
+	if ( pShapefile == 0) {
+		return 1;
+	}
 
-        /* Do things with the polygonz. */
+    /* Reads the shape records and returns them as an SFShape*. */
+    SFShapes* pShapes = read_shapes(pShapefile);
 
-        free_polygonz_shape(polygonz);
-        polygonz = 0;
-    }
+    /* We can now iterate over each shape record. */
+	for ( uint32_t x = 0; x < pShapes->num_records; ++x ) {
+	    /* SFShapeRecord describes the shape type, offset, and size in the file. */
+		const SFShapeRecord* record = pShapes->records[x];
+		/* Read the desired record into an SFPolyLine*. The caller is responsible for freeing this. */
+		SFPolyLine* polyline = get_polyline_shape(pShapefile, record);
+	
+		/* Do stuff with the polyline. */
+		render_polyline(polyline);
 
-    close_shapefile();
+        /* Done with the polyline; it is our responsibility to free it. */
+		free_polyline_shape(polyline);
+		polyline = NULL;
+	}
+
+    /* We're done with our shape records; ensure that they're freed. */
+    free_shapes(pShapes);
+    /* We're done with the shapefile; close it. */
+	close_shapefile(pShapefile);
+```
