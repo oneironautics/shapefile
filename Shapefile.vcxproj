@@ -73,6 +73,7 @@
     <ClCompile Include="Shapefile\Shapefile.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Shapefile\Shapefile-internal.h" />
     <ClInclude Include="Shapefile\Shapefile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

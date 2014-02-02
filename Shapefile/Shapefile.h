@@ -30,13 +30,6 @@ THE SOFTWARE.
 #define SHAPEFILE_VERSION 1000
 #define SHAPEFILE_FILE_CODE 9994
 
-/*  Return codes. */
-typedef enum SFResult
-{
-    SF_ERROR = 0,
-    SF_OK = 1
-} SFResult;
-
 /*  Shape types. */
 enum ShapeType
 {
@@ -440,18 +433,13 @@ extern "C"
 {
 #endif
 
-/*  Utility functions. */
-int32_t byteswap32(int32_t value);
-void print_msg(const char* format, ...);
-const char* shape_type_to_name(const int32_t shape_type);
-
 /*  Shape file functions. */
 FILE* open_shapefile(const char* path);
 void close_shapefile(FILE* shapefile);
 SFShapes* read_shapes(FILE* shapefile);
-SFShapes* allocate_shapes(FILE* shapefile);
 const SFShapeRecord* get_shape_record(const SFShapes* pShapes, const uint32_t index);
 const char* get_shapefile_type(FILE* pShapefile);
+const char* shape_type_to_name(const int32_t shape_type);
 
 SFNull* get_null_shape(FILE* pShapefile, const SFShapeRecord* record);
 SFPoint* get_point_shape(FILE* pShapefile, const SFShapeRecord* record);

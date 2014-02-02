@@ -30,7 +30,7 @@ int test_polygon()
 
     SFShapes* pShapes = read_shapes(pShapefile);
 
-	for (uint32_t x = 0; x < pShapes->num_records; ++x) {
+	for ( uint32_t x = 0; x < pShapes->num_records; ++x ) {
 		const SFShapeRecord* record = pShapes->records[x];
 		SFPolygon* polygon = get_polygon_shape(pShapefile, record);
 		printf("Polygon %d: num_parts = %d, num_points = %d\n", x, polygon->num_parts, polygon->num_points);
@@ -60,7 +60,7 @@ int test_polyline()
 
     SFShapes* pShapes = read_shapes(pShapefile);
 
-	for (uint32_t x = 0; x < pShapes->num_records; ++x) {
+	for ( uint32_t x = 0; x < pShapes->num_records; ++x ) {
 		const SFShapeRecord* record = pShapes->records[x];
 		SFPolyLine* polyline = get_polyline_shape(pShapefile, record);
 		printf("Polyline %d: num_parts = %d, num_points = %d\n", x, polyline->num_parts, polyline->num_points);
@@ -90,7 +90,7 @@ int test_polygonz()
 
     SFShapes* pShapes = read_shapes(pShapefile);
 
-	for (uint32_t x = 0; x < pShapes->num_records; ++x) {
+	for ( uint32_t x = 0; x < pShapes->num_records; ++x ) {
         const SFShapeRecord* record = get_shape_record(pShapes, x);
 		SFPolygonZ* polygonz = get_polygonz_shape(pShapefile, record);
 		printf("PolygonZ %d: num_parts = %d, num_points = %d\n", x, polygonz->num_parts, polygonz->num_points);

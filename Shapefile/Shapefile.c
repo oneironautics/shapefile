@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "Shapefile.h"
+#include "Shapefile-internal.h"
 
 /*
 int32_t byteswap32(int32_t value)

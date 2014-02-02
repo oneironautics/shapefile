@@ -23,5 +23,8 @@
     <ClInclude Include="Shapefile\Shapefile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Shapefile\Shapefile-internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
