@@ -145,27 +145,27 @@ FILE* open_shapefile(const char* path)
 {
     SFFileHeader header;
     
-	FILE* pShapefile;
+    FILE* pShapefile;
 
 #ifdef _WIN32
-	fopen_s(&pShapefile, path, "rb");
+    fopen_s(&pShapefile, path, "rb");
 #else
-	pShapefile = fopen(path, "rb");
+    pShapefile = fopen(path, "rb");
 #endif
     
-	if ( pShapefile == NULL ) {
+    if ( pShapefile == NULL ) {
         print_msg("Could not open shape file <%s>.", path);
-		return NULL;
+        return NULL;
     }
 
-	fread(&header, sizeof(SFFileHeader), 1, pShapefile);
+    fread(&header, sizeof(SFFileHeader), 1, pShapefile);
     
     if ( byteswap32(header.file_code) != SHAPEFILE_FILE_CODE || header.version != SHAPEFILE_VERSION ) {
         print_msg("File <%s> is not a shape file.\n", path);
-		return NULL;
+        return NULL;
     }
     
-	return pShapefile;
+    return pShapefile;
 }
 
 /*
@@ -181,9 +181,9 @@ Returns:
 */
 void close_shapefile(FILE* pShapefile)
 {
-	if ( pShapefile != NULL ) {
-		fclose(pShapefile);
-		pShapefile = NULL;
+    if ( pShapefile != NULL ) {
+        fclose(pShapefile);
+        pShapefile = NULL;
     }
 }
 
@@ -202,7 +202,7 @@ void free_shapes(SFShapes* pShapes)
 {
     uint32_t x = 0;
 
-	if ( pShapes != NULL ) {
+    if ( pShapes != NULL ) {
         for ( ; x < pShapes->num_records; ++x ) {
             free(pShapes->records[x]);
             pShapes->records[x] = NULL;
@@ -228,14 +228,14 @@ Returns:
 const char* get_shapefile_type(FILE* pShapefile)
 {
     int32_t pos = 0;
-	SFFileHeader header;
+    SFFileHeader header;
 
     pos = ftell(pShapefile);
-	fseek(pShapefile, 0, SEEK_SET);
-	fread(&header, sizeof(SFFileHeader), 1, pShapefile);
+    fseek(pShapefile, 0, SEEK_SET);
+    fread(&header, sizeof(SFFileHeader), 1, pShapefile);
     fseek(pShapefile, pos, SEEK_SET);
 
-	return shape_type_to_name(header.shape_type);
+    return shape_type_to_name(header.shape_type);
 }
 
 /*
@@ -255,56 +255,56 @@ SFShapes* allocate_shapes(FILE* pShapefile)
     int32_t x = 0;
     int32_t num_records = 0;
     int32_t content_length = 0;
-	SFShapes* pShapes = NULL;
+    SFShapes* pShapes = NULL;
 
     /*  Read each shape record header and tally up the content length/number of records. */
-	while ( !feof(pShapefile) ) {
+    while ( !feof(pShapefile) ) {
         SFShapeRecordHeader header;
         int32_t shape_type = 0;
 
-		fread(&header, sizeof(SFShapeRecordHeader), 1, pShapefile);
+        fread(&header, sizeof(SFShapeRecordHeader), 1, pShapefile);
 
-		if ( feof(pShapefile) ) {
+        if ( feof(pShapefile) ) {
             break;
         }
 
         header.content_length = byteswap32(header.content_length);
         header.record_number = byteswap32(header.record_number);
-		fread(&shape_type, sizeof(int32_t), 1, pShapefile);
+        fread(&shape_type, sizeof(int32_t), 1, pShapefile);
         /*  Note: content_length is the number of 16 bit numbers, not a byte count. Multiply by sizeof(int16_t). */
-		fseek(pShapefile, header.content_length * sizeof(int16_t)-sizeof(int32_t), SEEK_CUR);
+        fseek(pShapefile, header.content_length * sizeof(int16_t)-sizeof(int32_t), SEEK_CUR);
         content_length += header.content_length * sizeof(int16_t) - sizeof(int32_t);
         num_records++;
     }
 
     /*  Seek back to the end of the main file header. */
-	fseek(pShapefile, sizeof(SFFileHeader), SEEK_SET);
+    fseek(pShapefile, sizeof(SFFileHeader), SEEK_SET);
     
     /*  Allocate enough memory for the record index. */
-	pShapes = (SFShapes*)malloc(sizeof(SFShapes));
+    pShapes = (SFShapes*)malloc(sizeof(SFShapes));
 
-	if ( pShapes == NULL ) {
+    if ( pShapes == NULL ) {
         print_msg("Could not allocate memory for shapes!");
-		return NULL;
+        return NULL;
     }
 
-	pShapes->records = (SFShapeRecord**)malloc(sizeof(SFShapeRecord)* (num_records + 1));
+    pShapes->records = (SFShapeRecord**)malloc(sizeof(SFShapeRecord)* (num_records + 1));
 
-	if ( pShapes->records == NULL ) {
+    if ( pShapes->records == NULL ) {
         print_msg("Could not allocate memory for g_shapes->records!");
-		return NULL;
+        return NULL;
     }
 
     for ( x = 0; x < num_records; ++x ) {
-		pShapes->records[x] = (SFShapeRecord*)malloc(sizeof(SFShapeRecord));
+        pShapes->records[x] = (SFShapeRecord*)malloc(sizeof(SFShapeRecord));
 
-		if ( pShapes->records[x] == NULL ) {
+        if ( pShapes->records[x] == NULL ) {
             print_msg("Could not allocate memory for g_shapes->records[%d]!", x);
-			return NULL;
+            return NULL;
         }
     }
     
-	pShapes->num_records = num_records;
+    pShapes->num_records = num_records;
 
     return pShapes;
 }
@@ -344,16 +344,16 @@ SFShapes* read_shapes(FILE* pShapefile)
 
         header.content_length = byteswap32(header.content_length);
         header.record_number = byteswap32(header.record_number);
-		fread(&shape_type, sizeof(int32_t), 1, pShapefile);
+        fread(&shape_type, sizeof(int32_t), 1, pShapefile);
 
 #ifdef DEBUG
         print_msg("Record %d, length %d (%d bytes), %s.\n", header.record_number, header.content_length, header.content_length * sizeof(int16_t), shape_type_to_name(shape_type));
 #endif
         /*  Note: content_length is the number of 16 bit numbers, not a byte count. Multiply by sizeof(int16_t). */
-		pShapes->records[index]->record_size = header.content_length * sizeof(int16_t)-sizeof(int32_t);
-		pShapes->records[index]->record_type = shape_type;
-		pShapes->records[index]->record_offset = ftell(pShapefile);
-		fseek(pShapefile, header.content_length * sizeof(int16_t)-sizeof(int32_t), SEEK_CUR);
+        pShapes->records[index]->record_size = header.content_length * sizeof(int16_t)-sizeof(int32_t);
+        pShapes->records[index]->record_type = shape_type;
+        pShapes->records[index]->record_offset = ftell(pShapefile);
+        fseek(pShapefile, header.content_length * sizeof(int16_t)-sizeof(int32_t), SEEK_CUR);
         index++;
     }
     
