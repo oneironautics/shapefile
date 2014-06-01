@@ -46,7 +46,7 @@ int32_t byteswap32(int32_t value)
 #else
     value = __builtin_bswap32(value);
 #endif
-    
+
     return value;
 }
 
@@ -68,7 +68,7 @@ void print_msg(const char* format, ...)
 
     va_list args;
     va_start(args, format);
-    
+
 #ifdef _WIN32
     vsprintf_s(buf, 1024, format, args);
 #else
@@ -136,7 +136,7 @@ close_shapefile() when it is no longer necessary.
 
 Arguments:
     const char* path: the path to the shapefile to open.
-    
+
 Returns:
     FILE*: a file pointer to the open shapefile.
     NULL: the shapefile could not be opened or was not a shapefile.
@@ -144,7 +144,7 @@ Returns:
 FILE* open_shapefile(const char* path)
 {
     SFFileHeader header;
-    
+
     FILE* pShapefile;
 
 #ifdef _WIN32
@@ -152,19 +152,19 @@ FILE* open_shapefile(const char* path)
 #else
     pShapefile = fopen(path, "rb");
 #endif
-    
+
     if ( pShapefile == NULL ) {
         print_msg("Could not open shape file <%s>.", path);
         return NULL;
     }
 
     fread(&header, sizeof(SFFileHeader), 1, pShapefile);
-    
+
     if ( byteswap32(header.file_code) != SHAPEFILE_FILE_CODE || header.version != SHAPEFILE_VERSION ) {
         print_msg("File <%s> is not a shape file.\n", path);
         return NULL;
     }
-    
+
     return pShapefile;
 }
 
@@ -175,7 +175,7 @@ Closes the shapefile.
 
 Arguments:
     FILE* pShapefile: a file pointer to a file opened by open_shapefile().
-    
+
 Returns:
     N/A.
 */
@@ -194,7 +194,7 @@ Frees all memory associated with the SFShapes*.
 
 Arguments:
     SFShapes* pShapes: the SFShapes* to free.
-    
+
 Returns:
     N/A.
 */
@@ -245,7 +245,7 @@ Allocates memory for shapefile records read from the shapefile.
 
 Arguments:
     FILE* pShapefile: a file pointer to a file opened by open_shapefile().
-    
+
 Returns:
     SFShapes*: an allocated structure of shape records.
     NULL: an out of memory condition was encountered.
@@ -279,7 +279,7 @@ SFShapes* allocate_shapes(FILE* pShapefile)
 
     /*  Seek back to the end of the main file header. */
     fseek(pShapefile, sizeof(SFFileHeader), SEEK_SET);
-    
+
     /*  Allocate enough memory for the record index. */
     pShapes = (SFShapes*)malloc(sizeof(SFShapes));
 
@@ -303,7 +303,7 @@ SFShapes* allocate_shapes(FILE* pShapefile)
             return NULL;
         }
     }
-    
+
     pShapes->num_records = num_records;
 
     return pShapes;
@@ -316,7 +316,7 @@ Reads shapes from a shapefile.
 
 Arguments:
     FILE* pShapefile: a file pointer to a file opened by open_shapefile().
-    
+
 Returns:
     SFShapes*: an allocated structure of shape records.
     NULL: an out of memory condition was encountered.
@@ -356,7 +356,7 @@ SFShapes* read_shapes(FILE* pShapefile)
         fseek(pShapefile, header.content_length * sizeof(int16_t)-sizeof(int32_t), SEEK_CUR);
         index++;
     }
-    
+
     return pShapes;
 }
 
@@ -479,7 +479,6 @@ Returns:
 */
 SFMultiPoint* get_multipoint_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
-    int32_t x = 0;
     SFMultiPoint* multipoint = NULL;
 
     if ( pRecord->record_type != stMultiPoint ) {
@@ -606,7 +605,7 @@ SFPolygon* get_polygon_shape(FILE* pShapefile, const SFShapeRecord* pRecord)
 {
     int32_t x = 0;
     SFPolygon* polygon = NULL;
-   
+
     if ( pRecord->record_type != stPolygon ) {
         return NULL;
     }
